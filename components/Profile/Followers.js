@@ -7,7 +7,12 @@ import axios from "axios";
 import baseUrl from "../../utils/baseUrl";
 import cookie from "js-cookie";
 
-export default ({ user, loggedUserFollowStats, setUserFollowStats, profileUserId }) => {
+const Followers = ({
+  user,
+  loggedUserFollowStats,
+  setUserFollowStats,
+  profileUserId,
+}) => {
   const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -16,9 +21,12 @@ export default ({ user, loggedUserFollowStats, setUserFollowStats, profileUserId
     const getFollowers = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${baseUrl}/api/profile/followers/${profileUserId}`, {
-          headers: { Authorization: cookie.get("token") }
-        });
+        const res = await axios.get(
+          `${baseUrl}/api/profile/followers/${profileUserId}`,
+          {
+            headers: { Authorization: cookie.get("token") },
+          }
+        );
 
         setFollowers(res.data);
       } catch (error) {
@@ -35,13 +43,13 @@ export default ({ user, loggedUserFollowStats, setUserFollowStats, profileUserId
       {loading ? (
         <Spinner />
       ) : followers.length > 0 ? (
-        followers.map(profileFollower => {
+        followers.map((profileFollower) => {
           /*  */
 
           const isFollowing =
             loggedUserFollowStats.following.length > 0 &&
             loggedUserFollowStats.following.filter(
-              following => following.user === profileFollower.user._id
+              (following) => following.user === profileFollower.user._id
             ).length > 0;
 
           return (
@@ -58,8 +66,14 @@ export default ({ user, loggedUserFollowStats, setUserFollowStats, profileUserId
                         setFollowLoading(true);
 
                         isFollowing
-                          ? unfollowUser(profileFollower.user._id, setUserFollowStats)
-                          : followUser(profileFollower.user._id, setUserFollowStats);
+                          ? unfollowUser(
+                              profileFollower.user._id,
+                              setUserFollowStats
+                            )
+                          : followUser(
+                              profileFollower.user._id,
+                              setUserFollowStats
+                            );
 
                         setFollowLoading(false);
                       }}
@@ -80,3 +94,5 @@ export default ({ user, loggedUserFollowStats, setUserFollowStats, profileUserId
     </>
   );
 };
+
+export default Followers;
