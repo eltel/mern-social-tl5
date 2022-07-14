@@ -24,7 +24,7 @@ function Index({ user, postsData, errorLoading }) {
   useEffect(() => {
     document.title = `Welcome, ${user.name.split(" ")[0]}`;
   }, []);
-  // a test comment
+  // a test
   useEffect(() => {
     showToastr && setTimeout(() => setShowToastr(false), 3000);
   }, [showToastr]);
