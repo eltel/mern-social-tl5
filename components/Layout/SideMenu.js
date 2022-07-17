@@ -27,8 +27,12 @@ function SideMenu({
               alt="ProfilePic"
               size="large"
             />
-            <List.Content>
-              <List.Header content="Home" color={isActive("/") && "teal"} />
+            <List.Content floated="right">
+              <List.Header
+                content="Home"
+                color={isActive("/") && "teal"}
+                floated="right"
+              />
             </List.Content>
           </List.Item>
         </Link>

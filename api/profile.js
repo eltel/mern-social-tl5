@@ -198,7 +198,9 @@ router.post("/update", authMiddleware, async (req, res) => {
       req.body;
 
     let profileFields = {};
-    profileFields.user = user._id;
+    // reverted to userId as intructions from Inder broke the process
+    profileFields.user = userId;
+    // profileFields.user = user._id
 
     profileFields.bio = bio;
 
