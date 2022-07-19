@@ -1,60 +1,32 @@
-import App from "next/app";
-import axios from "axios";
-import { parseCookies, destroyCookie } from "nookies";
-import baseUrl from "../utils/baseUrl";
-import { redirectUser } from "../utils/authUser";
-import Layout from "../components/Layout/Layout";
-import "react-toastify/dist/ReactToastify.css";
-import "semantic-ui-css/semantic.min.css";
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+const UserModel = require("../models/UserModel");
 
-class MyApp extends App {
-  static async getInitialProps({ Component, ctx }) {
-    const { token } = parseCookies(ctx);
-    let pageProps = {};
+router.get("/:searchText", authMiddleware, async (req, res) => {
+  try {
+    const { searchText } = req.params;
+    const { userId } = req;
 
-    const protectedRoutes =
-      ctx.pathname === "/" ||
-      ctx.pathname === "/[username]" ||
-      ctx.pathname === "/notifications" ||
-      ctx.pathname === "/post/[postId]";
-    if (!token) {
-      protectedRoutes && redirectUser(ctx, "/login");
-    }
-    //
-    else {
-      if (Component.getInitialProps) {
-        pageProps = await Component.getInitialProps(ctx);
-      }
+    if (searchText.length === 0) return;
 
-      try {
-        const res = await axios.get(`${baseUrl}/api/auth`, {
-          headers: { Authorization: token },
-        });
+    let userPattern = new RegExp(`^${searchText}`);
 
-        const { user, userFollowStats } = res.data;
+    const results = await UserModel.find({
+      name: { $regex: userPattern, $options: "i" },
+    });
 
-        if (user) !protectedRoutes && redirectUser(ctx, "/");
+    const resultsToBeSent =
+      results.length > 0 &&
+      results.filter((result) => result._id.toString() !== userId);
 
-        pageProps.user = user;
-        pageProps.userFollowStats = userFollowStats;
-      } catch (error) {
-        destroyCookie(ctx, "token");
-        redirectUser(ctx, "/login");
-      }
-    }
-
-    return { pageProps };
+    return res
+      .status(200)
+      .json(resultsToBeSent.length > 0 ? resultsToBeSent : results);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send(`Server error`);
   }
+});
 
-  render() {
-    const { Component, pageProps } = this.props;
-
-    return (
-      <Layout {...pageProps}>
-        <Component {...pageProps} />
-      </Layout>
-    );
-  }
-}
-
-export default MyApp;
+module.exports = router;
