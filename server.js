@@ -48,7 +48,7 @@ io.on("connection", (socket) => {
     const receiverSocket = findConnectedUser(msgSendToUserId);
 
     if (receiverSocket) {
-      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      // WHEN YOU WANT TO SEND A MESSAGE TO A PARTICULAR SOCKET
       io.to(receiverSocket.socketId).emit("newMsgReceived", { newMsg });
     }
     //
@@ -95,6 +95,7 @@ nextApp.prepare().then(() => {
   app.use("/api/profile", require("./api/profile"));
   app.use("/api/notifications", require("./api/notifications"));
   app.use("/api/chats", require("./api/chats"));
+  app.use("/api/reset", require("./api/reset"));
 
   app.all("*", (req, res) => handle(req, res));
 
