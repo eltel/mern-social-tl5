@@ -8,7 +8,7 @@ import {
   Button,
   Popup,
   Header,
-  Modal
+  Modal,
 } from "semantic-ui-react";
 import PostComments from "./PostComments";
 import CommentInputField from "./CommentInputField";
@@ -19,11 +19,13 @@ import LikesList from "./LikesList";
 import ImageModal from "./ImageModal";
 import NoImageModal from "./NoImageModal";
 
-function CardPost({ post, user, setPosts, setShowToastr }) {
+function CardPost({ post, user, setPosts, setShowToastr, socket }) {
   const [likes, setLikes] = useState(post.likes);
+  console.log("cardpost", socket);
 
   const isLiked =
-    likes.length > 0 && likes.filter(like => like.user === user._id).length > 0;
+    likes.length > 0 &&
+    likes.filter((like) => like.user === user._id).length > 0;
 
   const [comments, setComments] = useState(post.comments);
 
@@ -38,7 +40,7 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
     likes,
     isLiked,
     comments,
-    setComments
+    setComments,
   });
 
   return (
@@ -48,7 +50,8 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
           open={showModal}
           closeIcon
           closeOnDimmerClick
-          onClose={() => setShowModal(false)}>
+          onClose={() => setShowModal(false)}
+        >
           <Modal.Content>
             {post.picUrl ? (
               <ImageModal {...addPropsToModal()} />
@@ -74,7 +77,12 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
           )}
 
           <Card.Content>
-            <Image floated="left" src={post.user.profilePicUrl} avatar circular />
+            <Image
+              floated="left"
+              src={post.user.profilePicUrl}
+              avatar
+              circular
+            />
 
             {(user.role === "root" || post.user._id === user._id) && (
               <>
@@ -88,7 +96,8 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
                       size="mini"
                       floated="right"
                     />
-                  }>
+                  }
+                >
                   <Header as="h4" content="Are you sure?" />
                   <p>This action is irreversible!</p>
 
@@ -96,7 +105,9 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
                     color="red"
                     icon="trash"
                     content="Delete"
-                    onClick={() => deletePost(post._id, setPosts, setShowToastr)}
+                    onClick={() =>
+                      deletePost(post._id, setPosts, setShowToastr)
+                    }
                   />
                 </Popup>
               </>
@@ -116,8 +127,9 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
               style={{
                 fontSize: "17px",
                 letterSpacing: "0.1px",
-                wordSpacing: "0.35px"
-              }}>
+                wordSpacing: "0.35px",
+              }}
+            >
               {post.text}
             </Card.Description>
           </Card.Content>
@@ -127,9 +139,34 @@ function CardPost({ post, user, setPosts, setShowToastr }) {
               name={isLiked ? "heart" : "heart outline"}
               color="red"
               style={{ cursor: "pointer" }}
-              onClick={() =>
-                likePost(post._id, user._id, setLikes, isLiked ? false : true)
-              }
+              onClick={() => {
+                if (socket.current) {
+                  socket.current.emit("likePost", {
+                    postId: post._id,
+                    userId: user._id,
+                    like: isLiked ? false : true,
+                  });
+
+                  socket.current.on("postLiked", () => {
+                    if (isLiked) {
+                      setLikes((prev) =>
+                        prev.filter((like) => like.user !== user._id)
+                      );
+                    }
+                    //
+                    else {
+                      setLikes((prev) => [...prev, { user: user._id }]);
+                    }
+                  });
+                } else {
+                  likePost(
+                    post._id,
+                    user._id,
+                    setLikes,
+                    isLiked ? false : true
+                  );
+                }
+              }}
             />
 
             <LikesList
