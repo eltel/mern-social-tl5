@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Form, Button, Image, Divider, Message, Icon } from "semantic-ui-react";
 import uploadPic from "../../utils/uploadPicToCloudinary";
 import { submitNewPost } from "../../utils/postActions";
+import CropImageModal from "./CropImageModal";
 
 function CreatePost({ user, setPosts }) {
   const [newPost, setNewPost] = useState({ text: "", location: "" });
@@ -14,12 +15,16 @@ function CreatePost({ user, setPosts }) {
   const [media, setMedia] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
 
+  const [showModal, setShowModal] = useState(false);
+
   const handleChange = e => {
     const { name, value, files } = e.target;
 
     if (name === "media") {
-      setMedia(files[0]);
-      setMediaPreview(URL.createObjectURL(files[0]));
+      if (files && files.length > 0) {
+        setMedia(files[0]);
+        return setMediaPreview(URL.createObjectURL(files[0]));
+      }
     }
 
     setNewPost(prev => ({ ...prev, [name]: value }));
@@ -49,6 +54,7 @@ function CreatePost({ user, setPosts }) {
     }
 
     await submitNewPost(
+      user,
       newPost.text,
       newPost.location,
       picUrl,
@@ -58,12 +64,27 @@ function CreatePost({ user, setPosts }) {
     );
 
     setMedia(null);
-    setMediaPreview(null);
+    mediaPreview && URL.revokeObjectURL(mediaPreview);
+    setTimeout(() => setMediaPreview(null), 3000);
     setLoading(false);
+  };
+
+  const dragEvent = (e, valueToSet) => {
+    e.preventDefault();
+    setHighlighted(valueToSet);
   };
 
   return (
     <>
+      {showModal && (
+        <CropImageModal
+          mediaPreview={mediaPreview}
+          setMedia={setMedia}
+          showModal={showModal}
+          setShowModal={setShowModal}
+        />
+      )}
+
       <Form error={error !== null} onSubmit={handleSubmit}>
         <Message
           error
@@ -107,37 +128,46 @@ function CreatePost({ user, setPosts }) {
         <div
           onClick={() => inputRef.current.click()}
           style={addStyles()}
-          onDrag={e => {
-            e.preventDefault();
-            setHighlighted(true);
-          }}
-          onDragLeave={e => {
-            e.preventDefault();
-            setHighlighted(false);
-          }}
+          onDragOver={e => dragEvent(e, true)}
+          onDragLeave={e => dragEvent(e, false)}
           onDrop={e => {
-            e.preventDefault();
-            setHighlighted(true);
+            dragEvent(e, true);
 
             const droppedFile = Array.from(e.dataTransfer.files);
 
-            setMedia(droppedFile[0]);
-            setMediaPreview(URL.createObjectURL(droppedFile[0]));
-          }}>
+            if (droppedFile?.length > 0) {
+              setMedia(droppedFile[0]);
+              setMediaPreview(URL.createObjectURL(droppedFile[0]));
+            }
+          }}
+        >
           {media === null ? (
             <Icon name="plus" size="big" />
           ) : (
-            <>
-              <Image
-                style={{ height: "150px", width: "150px" }}
-                src={mediaPreview}
-                alt="PostImage"
-                centered
-                size="medium"
-              />
-            </>
+            <Image
+              style={{ height: "150px", width: "150px" }}
+              src={mediaPreview}
+              alt="PostImage"
+              centered
+              size="medium"
+            />
           )}
         </div>
+
+        {mediaPreview !== null && (
+          <>
+            <Divider hidden />
+
+            <Button
+              content="Crop Image"
+              type="button"
+              primary
+              circular
+              onClick={() => setShowModal(true)}
+            />
+          </>
+        )}
+
         <Divider hidden />
 
         <Button

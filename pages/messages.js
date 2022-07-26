@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
+import { io } from "socket.io-client";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
 import { parseCookies } from "nookies";
@@ -15,12 +15,19 @@ import getUserInfo from "../utils/getUserInfo";
 import newMsgSound from "../utils/newMsgSound";
 import cookie from "js-cookie";
 
-const scrollDivToBottom = (divRef) =>
-  divRef.current !== null &&
-  divRef.current.scrollIntoView({ behaviour: "smooth" });
+const setMessageToUnread = async () => {
+  await axios.post(
+    `${baseUrl}/api/chats`,
+    {},
+    { headers: { Authorization: cookie.get("token") } }
+  );
+};
+
+const scrollDivToBottom = divRef =>
+  divRef.current !== null && divRef.current.scrollIntoView({ behaviour: "smooth" });
 
 function Messages({ chatsData, user }) {
-  const [chats, setChats] = useState(chatsData);
+  const [chats, setChats] = useState(chatsData || []);
   const router = useRouter();
 
   const socket = useRef();
@@ -31,12 +38,13 @@ function Messages({ chatsData, user }) {
 
   const divRef = useRef();
 
-  // This ref is for persisting the state of the query string in the url throughout re-renders.
-  // This ref is the value of query string inside url
+  // This ref is for persisting the state of query string in url throughout re-renders. This ref is the value of query string inside url
   const openChatId = useRef("");
 
-  //CONNECTION useEffect must
+  //CONNECTION useEffect
   useEffect(() => {
+    if (user.unreadMessage) setMessageToUnread();
+
     if (!socket.current) {
       socket.current = io(baseUrl);
     }
@@ -50,17 +58,10 @@ function Messages({ chatsData, user }) {
 
       if (chats.length > 0 && !router.query.message) {
         router.push(`/messages?message=${chats[0].messagesWith}`, undefined, {
-          shallow: true,
+          shallow: true
         });
       }
     }
-
-    return () => {
-      if (socket.current) {
-        socket.current.emit("disconnect");
-        socket.current.off();
-      }
-    };
   }, []);
 
   // LOAD MESSAGES useEffect
@@ -68,14 +69,14 @@ function Messages({ chatsData, user }) {
     const loadMessages = () => {
       socket.current.emit("loadMessages", {
         userId: user._id,
-        messagesWith: router.query.message,
+        messagesWith: router.query.message
       });
 
       socket.current.on("messagesLoaded", async ({ chat }) => {
         setMessages(chat.messages);
         setBannerData({
           name: chat.messagesWith.name,
-          profilePicUrl: chat.messagesWith.profilePicUrl,
+          profilePicUrl: chat.messagesWith.profilePicUrl
         });
 
         openChatId.current = chat.messagesWith._id;
@@ -95,12 +96,12 @@ function Messages({ chatsData, user }) {
     if (socket.current && router.query.message) loadMessages();
   }, [router.query.message]);
 
-  const sendMsg = (msg) => {
+  const sendMsg = msg => {
     if (socket.current) {
       socket.current.emit("sendNewMsg", {
         userId: user._id,
         msgSendToUserId: openChatId.current,
-        msg,
+        msg
       });
     }
   };
@@ -110,11 +111,11 @@ function Messages({ chatsData, user }) {
     if (socket.current) {
       socket.current.on("msgSent", ({ newMsg }) => {
         if (newMsg.receiver === openChatId.current) {
-          setMessages((prev) => [...prev, newMsg]);
+          setMessages(prev => [...prev, newMsg]);
 
-          setChats((prev) => {
+          setChats(prev => {
             const previousChat = prev.find(
-              (chat) => chat.messagesWith === newMsg.receiver
+              chat => chat.messagesWith === newMsg.receiver
             );
             previousChat.lastMessage = newMsg.msg;
             previousChat.date = newMsg.date;
@@ -129,11 +130,11 @@ function Messages({ chatsData, user }) {
 
         // WHEN CHAT WITH SENDER IS CURRENTLY OPENED INSIDE YOUR BROWSER
         if (newMsg.sender === openChatId.current) {
-          setMessages((prev) => [...prev, newMsg]);
+          setMessages(prev => [...prev, newMsg]);
 
-          setChats((prev) => {
+          setChats(prev => {
             const previousChat = prev.find(
-              (chat) => chat.messagesWith === newMsg.sender
+              chat => chat.messagesWith === newMsg.sender
             );
             previousChat.lastMessage = newMsg.msg;
             previousChat.date = newMsg.date;
@@ -145,41 +146,31 @@ function Messages({ chatsData, user }) {
         }
         //
         else {
-          const ifPreviouslyMessaged =
-            chats.filter((chat) => chat.messagesWith === newMsg.sender).length >
-            0;
+          const { name, profilePicUrl } = await getUserInfo(newMsg.sender);
+          senderName = name;
 
-          if (ifPreviouslyMessaged) {
-            setChats((prev) => {
-              const previousChat = prev.find(
-                (chat) => chat.messagesWith === newMsg.sender
-              );
-              previousChat.lastMessage = newMsg.msg;
-              previousChat.date = newMsg.date;
+          const newChat = {
+            messagesWith: newMsg.sender,
+            name,
+            profilePicUrl,
+            lastMessage: newMsg.msg,
+            date: newMsg.date
+          };
 
-              senderName = previousChat.name;
+          setChats(prev => {
+            const previousChat = Boolean(
+              prev.find(chat => chat.messagesWith === newMsg.sender)
+            );
 
+            if (previousChat) {
               return [
-                previousChat,
-                ...prev.filter((chat) => chat.messagesWith !== newMsg.sender),
+                newChat,
+                ...prev.filter(chat => chat.messagesWith !== newMsg.sender)
               ];
-            });
-          }
-
-          //IF NO PREVIOUS CHAT WITH THE SENDER
-          else {
-            const { name, profilePicUrl } = await getUserInfo(newMsg.sender);
-            senderName = name;
-
-            const newChat = {
-              messagesWith: newMsg.sender,
-              name,
-              profilePicUrl,
-              lastMessage: newMsg.msg,
-              date: newMsg.date,
-            };
-            setChats((prev) => [newChat, ...prev]);
-          }
+            } else {
+              return [newChat, ...prev];
+            }
+          });
         }
 
         newMsgSound(senderName);
@@ -191,32 +182,29 @@ function Messages({ chatsData, user }) {
     messages.length > 0 && scrollDivToBottom(divRef);
   }, [messages]);
 
-  const deleteMsg = (messageId) => {
+  const deleteMsg = messageId => {
     if (socket.current) {
       socket.current.emit("deleteMsg", {
         userId: user._id,
         messagesWith: openChatId.current,
-        messageId,
+        messageId
       });
 
       socket.current.on("msgDeleted", () => {
-        setMessages((prev) =>
-          prev.filter((message) => message._id !== messageId)
-        );
+        setMessages(prev => prev.filter(message => message._id !== messageId));
       });
     }
   };
 
-  const deleteChat = async (messagesWith) => {
+  const deleteChat = async messagesWith => {
     try {
       await axios.delete(`${baseUrl}/api/chats/${messagesWith}`, {
-        headers: { Authorization: cookie.get("token") },
+        headers: { Authorization: cookie.get("token") }
       });
 
-      setChats((prev) =>
-        prev.filter((chat) => chat.messagesWith !== messagesWith)
-      );
+      setChats(prev => prev.filter(chat => chat.messagesWith !== messagesWith));
       router.push("/messages", undefined, { shallow: true });
+      openChatId.current = "";
     } catch (error) {
       alert("Error deleting chat");
     }
@@ -242,13 +230,10 @@ function Messages({ chatsData, user }) {
             <Grid stackable>
               <Grid.Column width={4}>
                 <Comment.Group size="big">
-                  <Segment
-                    raised
-                    style={{ overflow: "auto", maxHeight: "32rem" }}
-                  >
-                    {chats.map((chat, i) => (
+                  <Segment raised style={{ overflow: "auto", maxHeight: "32rem" }}>
+                    {chats.map(chat => (
                       <Chat
-                        key={i}
+                        key={chat.messagesWith}
                         chat={chat}
                         connectedUsers={connectedUsers}
                         deleteChat={deleteChat}
@@ -267,7 +252,7 @@ function Messages({ chatsData, user }) {
                         overflowX: "hidden",
                         maxHeight: "35rem",
                         height: "35rem",
-                        backgroundColor: "whitesmoke",
+                        backgroundColor: "whitesmoke"
                       }}
                     >
                       <div style={{ position: "sticky", top: "0" }}>
@@ -275,10 +260,10 @@ function Messages({ chatsData, user }) {
                       </div>
 
                       {messages.length > 0 &&
-                        messages.map((message, i) => (
+                        messages.map(message => (
                           <Message
                             divRef={divRef}
-                            key={i}
+                            key={message._id}
                             bannerProfilePic={bannerData.profilePicUrl}
                             message={message}
                             user={user}
@@ -300,18 +285,17 @@ function Messages({ chatsData, user }) {
     </>
   );
 }
-
-Messages.getInitialProps = async (ctx) => {
+export const getServerSideProps = async ctx => {
   try {
     const { token } = parseCookies(ctx);
 
     const res = await axios.get(`${baseUrl}/api/chats`, {
-      headers: { Authorization: token },
+      headers: { Authorization: token }
     });
 
-    return { chatsData: res.data };
+    return { props: { chatsData: res.data } };
   } catch (error) {
-    return { errorLoading: true };
+    return { props: { errorLoading: true } };
   }
 };
 

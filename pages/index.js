@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
+// Version 4.4.1
+import { io } from "socket.io-client";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
 import CreatePost from "../components/Post/CreatePost";
@@ -25,8 +26,8 @@ function Index({ user, postsData, errorLoading }) {
   const [hasMore, setHasMore] = useState(true);
 
   const [pageNumber, setPageNumber] = useState(2);
-  const socket = useRef();
 
+  const socket = useRef();
   const [newMessageReceived, setNewMessageReceived] = useState(null);
   const [newMessageModal, showNewMessageModal] = useState(false);
 
@@ -58,7 +59,7 @@ function Index({ user, postsData, errorLoading }) {
     document.title = `Welcome, ${user.name.split(" ")[0]}`;
     return () => {
       if (socket.current) {
-        socket.current.emit("disconnect");
+        // socket.current.emit("disconnect");
         socket.current.off();
       }
     };
@@ -74,7 +75,6 @@ function Index({ user, postsData, errorLoading }) {
         headers: { Authorization: cookie.get("token") },
         params: { pageNumber },
       });
-
       if (res.data.length === 0) setHasMore(false);
 
       setPosts((prev) => [...prev, ...res.data]);
@@ -84,7 +84,7 @@ function Index({ user, postsData, errorLoading }) {
     }
   };
 
-  if (posts.length === 0 || errorLoading) return <NoPosts />;
+  // if (posts.length === 0 || errorLoading) return <NoPosts />;
 
   useEffect(() => {
     if (socket.current) {
@@ -119,33 +119,54 @@ function Index({ user, postsData, errorLoading }) {
           user={user}
         />
       )}
+
+      {/* {showToastr && <PostDeleteToastr />} */}
+
       <Segment>
         <CreatePost user={user} setPosts={setPosts} />
 
-        <InfiniteScroll
-          hasMore={hasMore}
-          next={fetchDataOnScroll}
-          loader={<PlaceHolderPosts />}
-          endMessage={<EndMessage />}
-          dataLength={posts.length}
-        >
-          {posts.map((post) => (
-            <CardPost
-              socket={socket}
-              key={post._id}
-              post={post}
-              user={user}
-              setPosts={setPosts}
-              setShowToastr={setShowToastr}
-            />
-          ))}
-        </InfiniteScroll>
+        {posts.length === 0 || errorLoading ? (
+          <NoPosts />
+        ) : (
+          <InfiniteScroll
+            hasMore={hasMore}
+            next={fetchDataOnScroll}
+            loader={<PlaceHolderPosts />}
+            endMessage={<EndMessage />}
+            dataLength={posts.length}
+          >
+            {posts.map((post) => (
+              <CardPost
+                socket={socket}
+                key={post._id}
+                post={post}
+                user={user}
+                setPosts={setPosts}
+                setShowToastr={setShowToastr}
+              />
+            ))}
+          </InfiniteScroll>
+        )}
       </Segment>
     </>
   );
 }
 
-Index.getInitialProps = async (ctx) => {
+// Index.getInitialProps = async (ctx) => {
+//   try {
+//     const { token } = parseCookies(ctx);
+
+//     const res = await axios.get(`${baseUrl}/api/posts`, {
+//       headers: { Authorization: token },
+//       params: { pageNumber: 1 },
+//     });
+
+//     return { postsData: res.data };
+//   } catch (error) {
+//     return { errorLoading: true };
+//   }
+// };
+export const getServerSideProps = async (ctx) => {
   try {
     const { token } = parseCookies(ctx);
 
@@ -154,9 +175,9 @@ Index.getInitialProps = async (ctx) => {
       params: { pageNumber: 1 },
     });
 
-    return { postsData: res.data };
+    return { props: { postsData: res.data } };
   } catch (error) {
-    return { errorLoading: true };
+    return { props: { errorLoading: true } };
   }
 };
 

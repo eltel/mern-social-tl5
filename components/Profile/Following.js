@@ -11,7 +11,7 @@ const Following = ({
   user,
   loggedUserFollowStats,
   setUserFollowStats,
-  profileUserId,
+  profileUserId
 }) => {
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const Following = ({
         const res = await axios.get(
           `${baseUrl}/api/profile/following/${profileUserId}`,
           {
-            headers: { Authorization: cookie.get("token") },
+            headers: { Authorization: cookie.get("token") }
           }
         );
 
@@ -43,21 +43,17 @@ const Following = ({
       {loading ? (
         <Spinner />
       ) : following.length > 0 ? (
-        following.map((profileFollowing) => {
+        following.map(profileFollowing => {
           /*  */
 
           const isFollowing =
             loggedUserFollowStats.following.length > 0 &&
-            loggedUserFollowStats.following.filter(
-              (following) => following.user === profileFollowing.user._id
-            ).length > 0;
+            loggedUserFollowStats.following.some(
+              following => following.user === profileFollowing.user._id
+            );
 
           return (
-            <List
-              key={profileFollowing.user._id}
-              divided
-              verticalAlign="middle"
-            >
+            <List key={profileFollowing.user._id} divided verticalAlign="middle">
               <List.Item>
                 <List.Content floated="right">
                   {profileFollowing.user._id !== user._id && (
@@ -70,14 +66,8 @@ const Following = ({
                         setFollowLoading(true);
 
                         isFollowing
-                          ? unfollowUser(
-                              profileFollowing.user._id,
-                              setUserFollowStats
-                            )
-                          : followUser(
-                              profileFollowing.user._id,
-                              setUserFollowStats
-                            );
+                          ? unfollowUser(profileFollowing.user._id, setUserFollowStats)
+                          : followUser(profileFollowing.user._id, setUserFollowStats);
 
                         setFollowLoading(false);
                       }}
@@ -85,10 +75,7 @@ const Following = ({
                   )}
                 </List.Content>
                 <Image avatar src={profileFollowing.user.profilePicUrl} />
-                <List.Content
-                  as="a"
-                  href={`/${profileFollowing.user.username}`}
-                >
+                <List.Content as="a" href={`/${profileFollowing.user.username}`}>
                   {profileFollowing.user.name}
                 </List.Content>
               </List.Item>

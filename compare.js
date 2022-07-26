@@ -25,7 +25,6 @@ function Index({ user, postsData, errorLoading }) {
   const [hasMore, setHasMore] = useState(true);
 
   const [pageNumber, setPageNumber] = useState(2);
-
   const socket = useRef();
 
   const [newMessageReceived, setNewMessageReceived] = useState(null);
@@ -56,9 +55,7 @@ function Index({ user, postsData, errorLoading }) {
         newMsgSound(name);
       });
     }
-
     document.title = `Welcome, ${user.name.split(" ")[0]}`;
-
     return () => {
       if (socket.current) {
         socket.current.emit("disconnect");
@@ -101,7 +98,6 @@ function Index({ user, postsData, errorLoading }) {
       );
     }
   }, []);
-
   return (
     <>
       {notificationPopup && newNotification !== null && (
@@ -123,7 +119,6 @@ function Index({ user, postsData, errorLoading }) {
           user={user}
         />
       )}
-
       <Segment>
         <CreatePost user={user} setPosts={setPosts} />
 

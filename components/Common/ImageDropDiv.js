@@ -43,6 +43,11 @@ function ImageDropDiv({
       </span>
     );
 
+  const dragEvent = (e, valueToSet) => {
+    e.preventDefault();
+    setHighlighted(valueToSet);
+  };
+
   return (
     <>
       <Form.Field>
@@ -57,26 +62,22 @@ function ImageDropDiv({
           />
 
           <div
-            onDragOver={e => {
-              e.preventDefault();
-              setHighlighted(true);
-            }}
-            onDragLeave={e => {
-              e.preventDefault();
-              setHighlighted(false);
-            }}
+            onDragOver={e => dragEvent(e, true)}
+            onDragLeave={e => dragEvent(e, false)}
             onDrop={e => {
-              e.preventDefault();
-              setHighlighted(true);
+              dragEvent(e, true);
 
               const droppedFile = Array.from(e.dataTransfer.files);
-              setMedia(droppedFile[0]);
-              setMediaPreview(URL.createObjectURL(droppedFile[0]));
+
+              if (droppedFile?.length > 0) {
+                setMedia(droppedFile[0]);
+                setMediaPreview(URL.createObjectURL(droppedFile[0]));
+              }
             }}
           >
             {mediaPreview === null ? (
               <>
-                <Segment color={highlighted ? "green" : ""} placeholder basic>
+                <Segment {...(highlighted && { color: "green" })} placeholder basic>
                   {checkForSignupPage()}
                 </Segment>
               </>

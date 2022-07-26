@@ -17,12 +17,12 @@ router.get("/", authMiddleware, async (req, res) => {
     let chatsToBeSent = [];
 
     if (user.chats.length > 0) {
-      chatsToBeSent = await user.chats.map((chat) => ({
+      chatsToBeSent = user.chats.map(chat => ({
         messagesWith: chat.messagesWith._id,
         name: chat.messagesWith.name,
         profilePicUrl: chat.messagesWith.profilePicUrl,
         lastMessage: chat.messages[chat.messages.length - 1].msg,
-        date: chat.messages[chat.messages.length - 1].date,
+        date: chat.messages[chat.messages.length - 1].date
       }));
     }
 
@@ -51,33 +51,57 @@ router.get("/user/:userToFindId", authMiddleware, async (req, res) => {
 });
 
 // Delete a chat
+
 router.delete(`/:messagesWith`, authMiddleware, async (req, res) => {
   try {
     const { userId } = req;
     const { messagesWith } = req.params;
 
-    const user = await ChatModel.findOne({ user: userId });
-
-    const chatToDelete = user.chats.find(
-      (chat) => chat.messagesWith.toString() === messagesWith
+    await ChatModel.findOneAndUpdate(
+      { user: userId },
+      { $pull: { chats: { messagesWith } } }
     );
-
-    if (!chatToDelete) {
-      return res.status(404).send("Chat not found");
-    }
-
-    const indexOf = user.chats
-      .map((chat) => chat.messagesWith.toString())
-      .indexOf(messagesWith);
-
-    user.chats.splice(indexOf, 1);
-
-    await user.save();
-
     return res.status(200).send("Chat deleted");
+
+    // const user = await ChatModel.findOne({ user: userId });
+
+    // const chatToDelete = user.chats.find(
+    //   chat => chat.messagesWith.toString() === messagesWith
+    // );
+
+    // if (!chatToDelete) {
+    //   return res.status(404).send("Chat not found");
+    // }
+
+    // const indexOf = user.chats
+    //   .map(chat => chat.messagesWith.toString())
+    //   .indexOf(messagesWith);
+
+    // user.chats.splice(indexOf, 1);
+
+    // await user.save();
+
+    // return res.status(200).send("Chat deleted");
   } catch (error) {
     console.error(error);
     return res.status(500).send("Server Error");
+  }
+});
+
+// SET UNREAD MESSAGE TO READ
+
+router.post("/", authMiddleware, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.userId);
+    if (!user.unreadMessage) {
+      user.unreadMessage = true;
+      await user.save();
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send(`Server error`);
   }
 });
 

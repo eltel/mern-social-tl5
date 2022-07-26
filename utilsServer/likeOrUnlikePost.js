@@ -2,7 +2,7 @@ const UserModel = require("../models/UserModel");
 const PostModel = require("../models/PostModel");
 const {
   newLikeNotification,
-  removeLikeNotification
+  removeLikeNotification,
 } = require("../utilsServer/notificationActions");
 
 const likeOrUnlikePost = async (postId, userId, like) => {
@@ -10,10 +10,11 @@ const likeOrUnlikePost = async (postId, userId, like) => {
     const post = await PostModel.findById(postId);
 
     if (!post) return { error: "No post found" };
+    const postByUserId = post.user.toString();
 
     if (like) {
       const isLiked =
-        post.likes.filter(like => like.user.toString() === userId).length > 0;
+        post.likes.filter((like) => like.user.toString() === userId).length > 0;
 
       if (isLiked) return { error: "Post liked before" };
 
@@ -21,25 +22,28 @@ const likeOrUnlikePost = async (postId, userId, like) => {
 
       await post.save();
 
-      if (post.user.toString() !== userId) {
-        await newLikeNotification(userId, postId, post.user.toString());
+      if (postByUserId !== userId) {
+        await newLikeNotification(userId, postId, postByUserId);
       }
     }
     //
     else {
       const isLiked =
-        post.likes.filter(like => like.user.toString() === userId).length === 0;
+        post.likes.filter((like) => like.user.toString() === userId).length ===
+        0;
 
       if (isLiked) return { error: "Post not liked before" };
 
-      const indexOf = post.likes.map(like => like.user.toString()).indexOf(userId);
+      const indexOf = post.likes
+        .map((like) => like.user.toString())
+        .indexOf(userId);
 
       await post.likes.splice(indexOf, 1);
 
       await post.save();
 
-      if (post.user.toString() !== userId) {
-        await removeLikeNotification(userId, postId, post.user.toString());
+      if (postByUserId !== userId) {
+        await removeLikeNotification(userId, postId, postByUserId);
       }
     }
 
@@ -52,7 +56,7 @@ const likeOrUnlikePost = async (postId, userId, like) => {
       name,
       profilePicUrl,
       username,
-      postByUserId: post.user.toString()
+      postByUserId,
     };
   } catch (error) {
     return { error: "Server error" };

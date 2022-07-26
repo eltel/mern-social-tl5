@@ -3,11 +3,10 @@ import baseUrl from "./baseUrl";
 import catchErrors from "./catchErrors";
 import cookie from "js-cookie";
 
-// const Axios = axios.create({
+// export const Axios = axios.create({
 //   baseURL: `${baseUrl}/api/posts`,
-//   headers: { Authorization: cookie.get("token") }
+//   headers: { Authorization: cookie.get("token") },
 // });
-
 const Axios = axios.create({
   baseURL: `${baseUrl}/api/posts`,
   // headers: { Authorization: cookie.get("token") },
@@ -21,6 +20,7 @@ Axios.interceptors.request.use((config) => {
 });
 
 export const submitNewPost = async (
+  user,
   text,
   location,
   picUrl,
@@ -31,6 +31,14 @@ export const submitNewPost = async (
   try {
     const res = await Axios.post("/", { text, location, picUrl });
 
+    // const newPost = {
+    //   ...res.data,
+    //   user,
+    //   likes: [],
+    //   comments: [],
+    // };
+
+    // setPosts((prev) => [newPost, ...prev]);
     setPosts((prev) => [res.data, ...prev]);
     setNewPost({ text: "", location: "" });
   } catch (error) {

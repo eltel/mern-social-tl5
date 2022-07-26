@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
@@ -6,7 +6,6 @@ import { parseCookies } from "nookies";
 import { Grid } from "semantic-ui-react";
 import { NoProfilePosts, NoProfile } from "../components/Layout/NoData";
 import CardPost from "../components/Post/CardPost";
-import cookie from "js-cookie";
 import { PlaceHolderPosts } from "../components/Layout/PlaceHolderGroup";
 import ProfileMenuTabs from "../components/Profile/ProfileMenuTabs";
 import ProfileHeader from "../components/Profile/ProfileHeader";
@@ -15,6 +14,8 @@ import Following from "../components/Profile/Following";
 import UpdateProfile from "../components/Profile/UpdateProfile";
 import Settings from "../components/Profile/Settings";
 import { PostDeleteToastr } from "../components/Layout/Toastr";
+import SocketHoc from "../components/SocketHoc";
+import { Axios } from "../utils/profileActions";
 
 function ProfilePage({
   errorLoading,
@@ -22,7 +23,7 @@ function ProfilePage({
   followersLength,
   followingLength,
   user,
-  userFollowStats,
+  userFollowStats
 }) {
   const router = useRouter();
 
@@ -31,26 +32,21 @@ function ProfilePage({
   const [showToastr, setShowToastr] = useState(false);
 
   const [activeItem, setActiveItem] = useState("profile");
-  const handleItemClick = (clickedTab) => setActiveItem(clickedTab);
+  const handleItemClick = clickedTab => setActiveItem(clickedTab);
 
   const [loggedUserFollowStats, setUserFollowStats] = useState(userFollowStats);
-  console.log("profile", profile.user);
+
   const ownAccount = profile.user._id === user._id;
 
   if (errorLoading) return <NoProfile />;
 
   useEffect(() => {
-    const getPosts = async () => {
+    (async () => {
       setLoading(true);
 
       try {
         const { username } = router.query;
-        const res = await axios.get(
-          `${baseUrl}/api/profile/posts/${username}`,
-          {
-            headers: { Authorization: cookie.get("token") },
-          }
-        );
+        const res = await Axios.get(`/posts/${username}`);
 
         setPosts(res.data);
       } catch (error) {
@@ -58,16 +54,17 @@ function ProfilePage({
       }
 
       setLoading(false);
-    };
-    getPosts();
+    })();
   }, [router.query.username]);
 
   useEffect(() => {
     showToastr && setTimeout(() => setShowToastr(false), 4000);
   }, [showToastr]);
 
+  const socket = useRef();
+
   return (
-    <>
+    <SocketHoc user={user} socket={socket}>
       {showToastr && <PostDeleteToastr />}
 
       <Grid stackable>
@@ -98,8 +95,9 @@ function ProfilePage({
                 {loading ? (
                   <PlaceHolderPosts />
                 ) : posts.length > 0 ? (
-                  posts.map((post) => (
+                  posts.map(post => (
                     <CardPost
+                      socket={socket}
                       key={post._id}
                       post={post}
                       user={user}
@@ -131,9 +129,7 @@ function ProfilePage({
               />
             )}
 
-            {activeItem === "updateProfile" && (
-              <UpdateProfile Profile={profile} />
-            )}
+            {activeItem === "updateProfile" && <UpdateProfile Profile={profile} />}
 
             {activeItem === "settings" && (
               <Settings newMessagePopup={user.newMessagePopup} />
@@ -141,24 +137,24 @@ function ProfilePage({
           </Grid.Column>
         </Grid.Row>
       </Grid>
-    </>
+    </SocketHoc>
   );
 }
 
-ProfilePage.getInitialProps = async (ctx) => {
+export const getServerSideProps = async ctx => {
   try {
     const { username } = ctx.query;
     const { token } = parseCookies(ctx);
 
     const res = await axios.get(`${baseUrl}/api/profile/${username}`, {
-      headers: { Authorization: token },
+      headers: { Authorization: token }
     });
 
     const { profile, followersLength, followingLength } = res.data;
 
-    return { profile, followersLength, followingLength };
+    return { props: { profile, followersLength, followingLength } };
   } catch (error) {
-    return { errorLoading: true };
+    return { props: { errorLoading: true } };
   }
 };
 

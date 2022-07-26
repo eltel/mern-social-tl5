@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Form, Button, Message, Segment, Divider } from "semantic-ui-react";
 import CommonInputs from "../components/Common/CommonInputs";
 import ImageDropDiv from "../components/Common/ImageDropDiv";
@@ -7,8 +7,7 @@ import axios from "axios";
 import baseUrl from "../utils/baseUrl";
 import { registerUser } from "../utils/authUser";
 import uploadPic from "../utils/uploadPicToCloudinary";
-const regexUserName = /^(?!.*\.\.)(?!.*\.$)[^\W][\w.]{0,29}$/;
-let cancel;
+let controller = null;
 
 function Signup() {
   const [user, setUser] = useState({
@@ -28,8 +27,10 @@ function Signup() {
     const { name, value, files } = e.target;
 
     if (name === "media") {
-      setMedia(files[0]);
-      setMediaPreview(URL.createObjectURL(files[0]));
+      if (files && files.length > 0) {
+        setMedia(files[0]);
+        return setMediaPreview(URL.createObjectURL(files[0]));
+      }
     }
 
     setUser(prev => ({ ...prev, [name]: value }));
@@ -41,9 +42,10 @@ function Signup() {
   const [formLoading, setFormLoading] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(true);
 
-  const [username, setUsername] = useState("");
-  const [usernameLoading, setUsernameLoading] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const usernameInputDiv = useRef();
+  const requiredFieldDiv = useRef();
+  const usernameInput = useRef();
+  const leftIcon = useRef();
 
   const [media, setMedia] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
@@ -57,38 +59,58 @@ function Signup() {
     isUser ? setSubmitDisabled(false) : setSubmitDisabled(true);
   }, [user]);
 
-  const checkUsername = async () => {
-    setUsernameLoading(true);
+  const checkUsername = async (value = "") => {
+    if (value.length === 0 || value.trim().length === 0) {
+      if (!requiredFieldDiv.current.classList.contains("error")) {
+        requiredFieldDiv.current.classList.add("error");
+      }
+
+      leftIcon.current.className = "close icon";
+      return;
+    }
+
+    usernameInput.current.value = value;
+
+    usernameInputDiv.current.classList.add("loading");
+
     try {
-      cancel && cancel();
+      if (controller) controller.abort();
 
-      const CancelToken = axios.CancelToken;
+      controller = new AbortController();
 
-      const res = await axios.get(`${baseUrl}/api/signup/${username}`, {
-        cancelToken: new CancelToken(canceler => {
-          cancel = canceler;
-        })
+      const res = await axios.get(`${baseUrl}/api/signup/${value}`, {
+        signal: controller.signal
       });
 
-      if (errorMsg !== null) setErrorMsg(null);
-
       if (res.data === "Available") {
-        setUsernameAvailable(true);
-        setUser(prev => ({ ...prev, username }));
+        if (requiredFieldDiv.current.classList.contains("error")) {
+          requiredFieldDiv.current.classList.remove("error");
+        }
+
+        leftIcon.current.className = "check icon";
+        setUser(prev => ({ ...prev, username: value }));
       }
     } catch (error) {
       setErrorMsg("Username Not Available");
-      setUsernameAvailable(false);
-    }
-    setUsernameLoading(false);
-  };
 
-  useEffect(() => {
-    username === "" ? setUsernameAvailable(false) : checkUsername();
-  }, [username]);
+      if (!requiredFieldDiv.current.classList.contains("error")) {
+        requiredFieldDiv.current.classList.add("error");
+      }
+
+      leftIcon.current.className = "close icon";
+    }
+
+    usernameInputDiv.current.classList.remove("loading");
+    controller = null;
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
+
+    if (requiredFieldDiv.current.classList.contains("error")) {
+      return setErrorMsg("Username not available");
+    }
+
     setFormLoading(true);
 
     let profilePicUrl;
@@ -168,25 +190,18 @@ function Signup() {
             required
           />
 
-          <Form.Input
-            loading={usernameLoading}
-            error={!usernameAvailable}
-            required
-            label="Username"
-            placeholder="Username"
-            value={username}
-            onChange={e => {
-              setUsername(e.target.value);
-              if (regexUserName.test(e.target.value)) {
-                setUsernameAvailable(true);
-              } else {
-                setUsernameAvailable(false);
-              }
-            }}
-            fluid
-            icon={usernameAvailable ? "check" : "close"}
-            iconPosition="left"
-          />
+          <div ref={requiredFieldDiv} className="error required field">
+            <label htmlFor="usernameInput">Username</label>
+            <div ref={usernameInputDiv} className="ui fluid left icon input">
+              <input
+                ref={usernameInput}
+                placeholder="Username"
+                required
+                onChange={e => checkUsername(e.target.value)}
+              />
+              <i aria-hidden="true" ref={leftIcon} className="close icon" />
+            </div>
+          </div>
 
           <CommonInputs
             user={user}
@@ -201,7 +216,7 @@ function Signup() {
             content="Signup"
             type="submit"
             color="orange"
-            disabled={submitDisabled || !usernameAvailable}
+            disabled={submitDisabled}
           />
         </Segment>
       </Form>

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
 import CreatePost from "../components/Post/CreatePost";
@@ -13,10 +12,9 @@ import {
   PlaceHolderPosts,
   EndMessage,
 } from "../components/Layout/PlaceHolderGroup";
-import cookie from "js-cookie";
-import getUserInfo from "../utils/getUserInfo";
-import MessageNotificationModal from "../components/Home/MessageNotificationModal";
-import newMsgSound from "../utils/newMsgSound";
+
+import SocketHoc from "../components/SocketHoc";
+import { Axios } from "../utils/postActions";
 
 function Index({ user, postsData, errorLoading }) {
   const [posts, setPosts] = useState(postsData || []);
@@ -24,40 +22,11 @@ function Index({ user, postsData, errorLoading }) {
   const [hasMore, setHasMore] = useState(true);
 
   const [pageNumber, setPageNumber] = useState(2);
+
   const socket = useRef();
 
-  const [newMessageReceived, setNewMessageReceived] = useState(null);
-  const [newMessageModal, showNewMessageModal] = useState(false);
-
   useEffect(() => {
-    if (!socket.current) {
-      socket.current = io(baseUrl);
-    }
-
-    if (socket.current) {
-      socket.current.emit("join", { userId: user._id });
-
-      socket.current.on("newMsgReceived", async ({ newMsg }) => {
-        const { name, profilePicUrl } = await getUserInfo(newMsg.sender);
-
-        if (user.newMessagePopup) {
-          setNewMessageReceived({
-            ...newMsg,
-            senderName: name,
-            senderProfilePic: profilePicUrl,
-          });
-          showNewMessageModal(true);
-        }
-        newMsgSound(name);
-      });
-    }
     document.title = `Welcome, ${user.name.split(" ")[0]}`;
-    return () => {
-      if (socket.current) {
-        socket.current.emit("disconnect");
-        socket.current.off();
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -66,10 +35,7 @@ function Index({ user, postsData, errorLoading }) {
 
   const fetchDataOnScroll = async () => {
     try {
-      const res = await axios.get(`${baseUrl}/api/posts`, {
-        headers: { Authorization: cookie.get("token") },
-        params: { pageNumber },
-      });
+      const res = await Axios.get("/", { params: { pageNumber } });
 
       if (res.data.length === 0) setHasMore(false);
 
@@ -80,47 +46,41 @@ function Index({ user, postsData, errorLoading }) {
     }
   };
 
-  if (posts.length === 0 || errorLoading) return <NoPosts />;
-
   return (
-    <>
+    <SocketHoc user={user} socket={socket}>
       {showToastr && <PostDeleteToastr />}
 
-      {newMessageModal && newMessageReceived !== null && (
-        <MessageNotificationModal
-          socket={socket}
-          showNewMessageModal={showNewMessageModal}
-          newMessageModal={newMessageModal}
-          newMessageReceived={newMessageReceived}
-          user={user}
-        />
-      )}
       <Segment>
         <CreatePost user={user} setPosts={setPosts} />
 
-        <InfiniteScroll
-          hasMore={hasMore}
-          next={fetchDataOnScroll}
-          loader={<PlaceHolderPosts />}
-          endMessage={<EndMessage />}
-          dataLength={posts.length}
-        >
-          {posts.map((post) => (
-            <CardPost
-              key={post._id}
-              post={post}
-              user={user}
-              setPosts={setPosts}
-              setShowToastr={setShowToastr}
-            />
-          ))}
-        </InfiniteScroll>
+        {posts.length === 0 || errorLoading ? (
+          <NoPosts />
+        ) : (
+          <InfiniteScroll
+            hasMore={hasMore}
+            next={fetchDataOnScroll}
+            loader={<PlaceHolderPosts />}
+            endMessage={<EndMessage />}
+            dataLength={posts.length}
+          >
+            {posts.map((post) => (
+              <CardPost
+                socket={socket}
+                key={post._id}
+                post={post}
+                user={user}
+                setPosts={setPosts}
+                setShowToastr={setShowToastr}
+              />
+            ))}
+          </InfiniteScroll>
+        )}
       </Segment>
-    </>
+    </SocketHoc>
   );
 }
 
-Index.getInitialProps = async (ctx) => {
+export const getServerSideProps = async (ctx) => {
   try {
     const { token } = parseCookies(ctx);
 
@@ -129,9 +89,9 @@ Index.getInitialProps = async (ctx) => {
       params: { pageNumber: 1 },
     });
 
-    return { postsData: res.data };
+    return { props: { postsData: res.data } };
   } catch (error) {
-    return { errorLoading: true };
+    return { props: { errorLoading: true } };
   }
 };
 

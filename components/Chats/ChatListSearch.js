@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { List, Image, Search } from "semantic-ui-react";
 import axios from "axios";
 import cookie from "js-cookie";
@@ -15,6 +15,9 @@ function ChatListSearch({ chats, setChats }) {
   const handleChange = async e => {
     const { value } = e.target;
     setText(value);
+    if (value.length === 0) return;
+    if (value.trim().length === 0) return;
+
     setLoading(true);
 
     try {
@@ -29,11 +32,15 @@ function ChatListSearch({ chats, setChats }) {
         })
       });
 
-      if (res.data.length === 0) return setLoading(false);
+      if (res.data.length === 0) {
+        results.length > 0 && setResults([]);
+
+        return setLoading(false);
+      }
 
       setResults(res.data);
     } catch (error) {
-      alert("Error Searching");
+      console.log(error);
     }
 
     setLoading(false);
@@ -62,6 +69,10 @@ function ChatListSearch({ chats, setChats }) {
       return router.push(`/messages?message=${result._id}`);
     }
   };
+
+  useEffect(() => {
+    if (text.length === 0 && loading) setLoading(false);
+  }, [text]);
 
   return (
     <Search

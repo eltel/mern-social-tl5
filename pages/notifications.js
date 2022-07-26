@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Feed, Segment, Divider, Container } from "semantic-ui-react";
 import axios from "axios";
 import baseUrl from "../utils/baseUrl";
@@ -13,7 +13,7 @@ function Notifications({ notifications, errorLoading, user, userFollowStats }) {
   const [loggedUserFollowStats, setUserFollowStats] = useState(userFollowStats);
 
   useEffect(() => {
-    const notificationRead = async () => {
+    (async () => {
       try {
         await axios.post(
           `${baseUrl}/api/notifications`,
@@ -23,65 +23,55 @@ function Notifications({ notifications, errorLoading, user, userFollowStats }) {
       } catch (error) {
         console.log(error);
       }
-    };
-
-    notificationRead();
+    })();
   }, []);
 
   return (
-    <>
-      <Container style={{ marginTop: "1.5rem" }}>
-        {notifications.length > 0 ? (
-          <Segment color="teal" raised>
-            <div
-              style={{
-                maxHeight: "40rem",
-                overflow: "auto",
-                height: "40rem",
-                position: "relative",
-                width: "100%"
-              }}
-            >
-              <Feed size="small">
-                {notifications.map(notification => (
-                  <>
-                    {notification.type === "newLike" && notification.post !== null && (
-                      <LikeNotification
-                        key={notification._id}
-                        notification={notification}
-                      />
+    <Container style={{ marginTop: "1.5rem" }}>
+      {notifications.length > 0 ? (
+        <Segment color="teal" raised>
+          <div
+            style={{
+              maxHeight: "40rem",
+              overflow: "auto",
+              height: "40rem",
+              position: "relative",
+              width: "100%"
+            }}
+          >
+            <Feed size="small">
+              {notifications.map(notification => (
+                <Fragment key={notification._id}>
+                  {notification.type === "newLike" && notification.post !== null && (
+                    <LikeNotification notification={notification} />
+                  )}
+
+                  {notification.type === "newComment" &&
+                    notification.post !== null && (
+                      <CommentNotification notification={notification} />
                     )}
 
-                    {notification.type === "newComment" && notification.post !== null && (
-                      <CommentNotification
-                        key={notification._id}
-                        notification={notification}
-                      />
-                    )}
-
-                    {notification.type === "newFollower" && (
-                      <FollowerNotification
-                        key={notification._id}
-                        notification={notification}
-                        loggedUserFollowStats={loggedUserFollowStats}
-                        setUserFollowStats={setUserFollowStats}
-                      />
-                    )}
-                  </>
-                ))}
-              </Feed>
-            </div>
-          </Segment>
-        ) : (
-          <NoNotifications />
-        )}
-        <Divider hidden />
-      </Container>
-    </>
+                  {notification.type === "newFollower" && (
+                    <FollowerNotification
+                      notification={notification}
+                      loggedUserFollowStats={loggedUserFollowStats}
+                      setUserFollowStats={setUserFollowStats}
+                    />
+                  )}
+                </Fragment>
+              ))}
+            </Feed>
+          </div>
+        </Segment>
+      ) : (
+        <NoNotifications />
+      )}
+      <Divider hidden />
+    </Container>
   );
 }
 
-Notifications.getInitialProps = async ctx => {
+export const getServerSideProps = async ctx => {
   try {
     const { token } = parseCookies(ctx);
 
@@ -89,9 +79,9 @@ Notifications.getInitialProps = async ctx => {
       headers: { Authorization: token }
     });
 
-    return { notifications: res.data };
+    return { props: { notifications: res.data } };
   } catch (error) {
-    return { errorLoading: true };
+    return { props: { errorLoading: true } };
   }
 };
 

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { List, Image, Search } from "semantic-ui-react";
 import axios from "axios";
 import cookie from "js-cookie";
 import Router from "next/router";
 import baseUrl from "../../utils/baseUrl";
-let cancel;
+let controller = null;
 
 function SearchComponent() {
   const [text, setText] = useState("");
@@ -14,29 +14,39 @@ function SearchComponent() {
   const handleChange = async e => {
     const { value } = e.target;
     setText(value);
+
+    if (value.length === 0) return;
+    if (value.trim().length === 0) return;
+
+    setText(value);
     setLoading(true);
 
     try {
-      cancel && cancel();
-      const CancelToken = axios.CancelToken;
+      if (controller) controller.abort();
+      controller = new AbortController();
       const token = cookie.get("token");
 
       const res = await axios.get(`${baseUrl}/api/search/${value}`, {
         headers: { Authorization: token },
-        cancelToken: new CancelToken(canceler => {
-          cancel = canceler;
-        })
+        signal: controller.signal
       });
 
-      if (res.data.length === 0) return setLoading(false);
+      if (res.data.length === 0) {
+        results.length > 0 && setResults([]);
 
+        return setLoading(false);
+      }
       setResults(res.data);
     } catch (error) {
-      alert("Error Searching");
+      console.log(error);
     }
-
+    controller = null;
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (text.length === 0 && loading) setLoading(false);
+  }, [text]);
 
   return (
     <Search

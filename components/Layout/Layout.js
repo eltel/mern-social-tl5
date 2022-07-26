@@ -1,14 +1,6 @@
-import React, { createRef } from "react";
-import HeadTags from "./HeadTags";
+import React, { useRef } from "react";
 import Navbar from "./Navbar";
-import {
-  Container,
-  Visibility,
-  Grid,
-  Sticky,
-  Ref,
-  Segment,
-} from "semantic-ui-react";
+import { Container, Visibility, Grid, Sticky, Ref, Segment } from "semantic-ui-react";
 import nprogress from "nprogress";
 import Router, { useRouter } from "next/router";
 import SideMenu from "./SideMenu";
@@ -17,14 +9,14 @@ import MobileHeader from "./MobileHeader";
 import { createMedia } from "@artsy/fresnel";
 
 const AppMedia = createMedia({
-  breakpoints: { zero: 0, mobile: 549, tablet: 850, computer: 1080 },
+  breakpoints: { zero: 0, mobile: 549, tablet: 850, computer: 1080 }
 });
 
 const mediaStyles = AppMedia.createMediaStyle();
 const { Media, MediaContextProvider } = AppMedia;
 
 function Layout({ children, user }) {
-  const contextRef = createRef();
+  const contextRef = useRef();
   const router = useRouter();
 
   const messagesRoute = router.pathname === "/messages";
@@ -35,7 +27,6 @@ function Layout({ children, user }) {
 
   return (
     <>
-      <HeadTags />
       {user ? (
         <>
           <style>{mediaStyles}</style>
@@ -54,9 +45,7 @@ function Layout({ children, user }) {
                         </Grid.Column>
 
                         <Grid.Column width={10}>
-                          <Visibility context={contextRef}>
-                            {children}
-                          </Visibility>
+                          <Visibility context={contextRef}>{children}</Visibility>
                         </Grid.Column>
 
                         <Grid.Column floated="left" width={4}>
@@ -89,9 +78,7 @@ function Layout({ children, user }) {
                         </Grid.Column>
 
                         <Grid.Column width={15}>
-                          <Visibility context={contextRef}>
-                            {children}
-                          </Visibility>
+                          <Visibility context={contextRef}>{children}</Visibility>
                         </Grid.Column>
                       </>
                     ) : (
@@ -116,9 +103,7 @@ function Layout({ children, user }) {
                         </Grid.Column>
 
                         <Grid.Column width={14}>
-                          <Visibility context={contextRef}>
-                            {children}
-                          </Visibility>
+                          <Visibility context={contextRef}>{children}</Visibility>
                         </Grid.Column>
                       </>
                     ) : (

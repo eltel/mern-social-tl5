@@ -10,7 +10,7 @@ function MessageInputField({ sendMsg }) {
       <Segment secondary color="teal" attached="bottom">
         <Form
           reply
-          onSubmit={(e) => {
+          onSubmit={e => {
             e.preventDefault();
             sendMsg(text);
             setText("");
@@ -18,14 +18,14 @@ function MessageInputField({ sendMsg }) {
         >
           <Form.Input
             size="large"
-            placeholder="Send a Message"
+            placeholder="Send New Message"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={e => setText(e.target.value)}
             action={{
               color: "blue",
               icon: "telegram plane",
               disabled: text === "",
-              loading: loading,
+              loading: loading
             }}
           />
         </Form>

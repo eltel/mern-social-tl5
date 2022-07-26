@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Card,
   Icon,
@@ -21,7 +21,6 @@ import NoImageModal from "./NoImageModal";
 
 function CardPost({ post, user, setPosts, setShowToastr, socket }) {
   const [likes, setLikes] = useState(post.likes);
-  console.log("cardpost", socket);
 
   const isLiked =
     likes.length > 0 &&

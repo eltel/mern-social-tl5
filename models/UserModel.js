@@ -23,7 +23,7 @@ const UserSchema = new Schema(
 
     resetToken: { type: String },
 
-    expireToken: { type: Date }
+    expireToken: { type: Date },
   },
   { timestamps: true }
 );

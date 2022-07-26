@@ -6,11 +6,36 @@ const newMsgSound = senderName => {
   if (senderName) {
     document.title = `New message from ${senderName}`;
 
-    if (document.visibilityState === "visible") {
-      setTimeout(() => {
-        document.title = "Messages";
-      }, 5000);
+    let changeBackDocTitle = "";
+
+    switch (location.pathname) {
+      case "/":
+        {
+          changeBackDocTitle = "Welcome!";
+        }
+        break;
+
+      case "/messages":
+        {
+          changeBackDocTitle = "Messages";
+        }
+        break;
+
+      default:
+        {
+          changeBackDocTitle = "Welcome!";
+        }
+        break;
     }
+
+    setTimeout(() => {
+      document.title = changeBackDocTitle;
+    }, 5000);
+    // if (document.visibilityState === "visible") {
+    //   setTimeout(() => {
+    //     document.title = "Messages";
+    //   }, 5000);
+    // }
   }
 };
 

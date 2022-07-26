@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { List, Divider, Message, Checkbox, Form, Button } from "semantic-ui-react";
 import { passwordUpdate, toggleMessagePopup } from "../../utils/profileActions";
 
@@ -7,7 +7,6 @@ function Settings({ newMessagePopup }) {
 
   const [newMessageSettings, showNewMessageSettings] = useState(false);
 
-  const isFirstRun = useRef(true);
   const [popupSetting, setPopupSetting] = useState(newMessagePopup);
 
   const [success, setSuccess] = useState(false);
@@ -15,13 +14,6 @@ function Settings({ newMessagePopup }) {
   useEffect(() => {
     success && setTimeout(() => setSuccess(false), 3000);
   }, [success]);
-
-  useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
-      return;
-    }
-  }, [popupSetting]);
 
   return (
     <>
@@ -70,9 +62,7 @@ function Settings({ newMessagePopup }) {
             <Checkbox
               checked={popupSetting}
               toggle
-              onChange={() =>
-                toggleMessagePopup(popupSetting, setPopupSetting, setSuccess)
-              }
+              onChange={() => toggleMessagePopup(setPopupSetting, setSuccess)}
             />
           </div>
         </List.Item>

@@ -11,7 +11,7 @@ const Followers = ({
   user,
   loggedUserFollowStats,
   setUserFollowStats,
-  profileUserId,
+  profileUserId
 }) => {
   const [followers, setFollowers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const Followers = ({
         const res = await axios.get(
           `${baseUrl}/api/profile/followers/${profileUserId}`,
           {
-            headers: { Authorization: cookie.get("token") },
+            headers: { Authorization: cookie.get("token") }
           }
         );
 
@@ -43,14 +43,14 @@ const Followers = ({
       {loading ? (
         <Spinner />
       ) : followers.length > 0 ? (
-        followers.map((profileFollower) => {
+        followers.map(profileFollower => {
           /*  */
 
           const isFollowing =
             loggedUserFollowStats.following.length > 0 &&
-            loggedUserFollowStats.following.filter(
-              (following) => following.user === profileFollower.user._id
-            ).length > 0;
+            loggedUserFollowStats.following.some(
+              following => following.user === profileFollower.user._id
+            );
 
           return (
             <List key={profileFollower.user._id} divided verticalAlign="middle">
@@ -66,14 +66,8 @@ const Followers = ({
                         setFollowLoading(true);
 
                         isFollowing
-                          ? unfollowUser(
-                              profileFollower.user._id,
-                              setUserFollowStats
-                            )
-                          : followUser(
-                              profileFollower.user._id,
-                              setUserFollowStats
-                            );
+                          ? unfollowUser(profileFollower.user._id, setUserFollowStats)
+                          : followUser(profileFollower.user._id, setUserFollowStats);
 
                         setFollowLoading(false);
                       }}

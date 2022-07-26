@@ -2,32 +2,19 @@ import axios from "axios";
 import baseUrl from "./baseUrl";
 import catchErrors from "./catchErrors";
 import cookie from "js-cookie";
-import Router from "next/router";
 
-// const Axios = axios.create({
-//   baseURL: `${baseUrl}/api/profile`,
-//   headers: { Authorization: cookie.get("token") }
-// });
-
-const Axios = axios.create({
+export const Axios = axios.create({
   baseURL: `${baseUrl}/api/profile`,
-  // headers: { Authorization: cookie.get("token") },
-});
-
-Axios.interceptors.request.use((config) => {
-  const token = cookie.get("token");
-  config.headers.Authorization = token;
-
-  return config;
+  headers: { Authorization: cookie.get("token") }
 });
 
 export const followUser = async (userToFollowId, setUserFollowStats) => {
   try {
     await Axios.post(`/follow/${userToFollowId}`);
 
-    setUserFollowStats((prev) => ({
+    setUserFollowStats(prev => ({
       ...prev,
-      following: [...prev.following, { user: userToFollowId }],
+      following: [...prev.following, { user: userToFollowId }]
     }));
   } catch (error) {
     alert(catchErrors(error));
@@ -38,23 +25,18 @@ export const unfollowUser = async (userToUnfollowId, setUserFollowStats) => {
   try {
     await Axios.put(`/unfollow/${userToUnfollowId}`);
 
-    setUserFollowStats((prev) => ({
+    setUserFollowStats(prev => ({
       ...prev,
       following: prev.following.filter(
-        (following) => following.user !== userToUnfollowId
-      ),
+        following => following.user !== userToUnfollowId
+      )
     }));
   } catch (error) {
     alert(catchErrors(error));
   }
 };
 
-export const profileUpdate = async (
-  profile,
-  setLoading,
-  setError,
-  profilePicUrl
-) => {
+export const profileUpdate = async (profile, setLoading, setError, profilePicUrl) => {
   try {
     const { bio, facebook, youtube, twitter, instagram } = profile;
 
@@ -64,11 +46,11 @@ export const profileUpdate = async (
       youtube,
       twitter,
       instagram,
-      profilePicUrl,
+      profilePicUrl
     });
 
     setLoading(false);
-    Router.reload();
+    window.location.reload();
   } catch (error) {
     setError(catchErrors(error));
     setLoading(false);
@@ -86,15 +68,11 @@ export const passwordUpdate = async (setSuccess, userPasswords) => {
   }
 };
 
-export const toggleMessagePopup = async (
-  popupSetting,
-  setPopupSetting,
-  setSuccess
-) => {
+export const toggleMessagePopup = async (setPopupSetting, setSuccess) => {
   try {
     await Axios.post(`/settings/messagePopup`);
 
-    setPopupSetting(!popupSetting);
+    setPopupSetting(prev => !prev);
     setSuccess(true);
   } catch (error) {
     alert(catchErrors(error));

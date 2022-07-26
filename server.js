@@ -1,15 +1,29 @@
 const express = require("express");
 const app = express();
-const server = require("http").Server(app);
-const io = require("socket.io")(server);
+
+// OLD VERSION taught in the course.
+// const server = require("http").Server(app);
+// const io = require("socket.io")(server);
+
+// LATEST VERSION Socket io @4.4.1
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  /* options */
+});
+
 const next = require("next");
 const dev = process.env.NODE_ENV !== "production";
 const nextApp = next({ dev });
 const handle = nextApp.getRequestHandler();
 require("dotenv").config({ path: "./config.env" });
+
 const connectDb = require("./utilsServer/connectDb");
 connectDb();
+
 app.use(express.json());
+
 const PORT = process.env.PORT || 3000;
 const {
   addUser,
@@ -28,7 +42,6 @@ const { likeOrUnlikePost } = require("./utilsServer/likeOrUnlikePost");
 io.on("connection", (socket) => {
   socket.on("join", async ({ userId }) => {
     const users = await addUser(userId, socket.id);
-    console.log(users);
 
     setInterval(() => {
       socket.emit("connectedUsers", {
@@ -59,6 +72,7 @@ io.on("connection", (socket) => {
       }
     }
   });
+
   socket.on("loadMessages", async ({ userId, messagesWith }) => {
     const { chat, error } = await loadMessages(userId, messagesWith);
 
@@ -72,7 +86,7 @@ io.on("connection", (socket) => {
     const receiverSocket = findConnectedUser(msgSendToUserId);
 
     if (receiverSocket) {
-      // WHEN YOU WANT TO SEND A MESSAGE TO A PARTICULAR SOCKET
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
       io.to(receiverSocket.socketId).emit("newMsgReceived", { newMsg });
     }
     //
@@ -123,7 +137,7 @@ nextApp.prepare().then(() => {
 
   app.all("*", (req, res) => handle(req, res));
 
-  server.listen(PORT, (err) => {
+  httpServer.listen(PORT, (err) => {
     if (err) throw err;
     console.log("Express server running");
   });
