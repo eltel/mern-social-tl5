@@ -5,6 +5,7 @@ import baseUrl from "../utils/baseUrl";
 import { redirectUser } from "../utils/authUser";
 import Layout from "../components/Layout/Layout";
 import "semantic-ui-css/semantic.min.css";
+// import "cropperjs/dist/cropper.css";
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -44,7 +45,7 @@ MyApp.getInitialProps = async ({ Component, ctx }) => {
 
       const res = await axios.get(`${baseUrl}/api/auth`, {
         headers: { Authorization: token, getFollowingData },
-        params: { getFollowingData }
+        params: { getFollowingData },
       });
 
       const { user, userFollowStats } = res.data;

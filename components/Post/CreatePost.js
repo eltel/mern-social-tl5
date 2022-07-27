@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import { Form, Button, Image, Divider, Message, Icon } from "semantic-ui-react";
 import uploadPic from "../../utils/uploadPicToCloudinary";
 import { submitNewPost } from "../../utils/postActions";
@@ -17,7 +17,7 @@ function CreatePost({ user, setPosts }) {
 
   const [showModal, setShowModal] = useState(false);
 
-  const handleChange = e => {
+  const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "media") {
@@ -27,7 +27,7 @@ function CreatePost({ user, setPosts }) {
       }
     }
 
-    setNewPost(prev => ({ ...prev, [name]: value }));
+    setNewPost((prev) => ({ ...prev, [name]: value }));
   };
 
   const addStyles = () => ({
@@ -37,10 +37,10 @@ function CreatePost({ user, setPosts }) {
     border: "dotted",
     paddingTop: media === null && "60px",
     cursor: "pointer",
-    borderColor: highlighted ? "green" : "black"
+    borderColor: highlighted ? "green" : "black",
   });
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     let picUrl;
@@ -79,6 +79,7 @@ function CreatePost({ user, setPosts }) {
       {showModal && (
         <CropImageModal
           mediaPreview={mediaPreview}
+          setMediaPreview={setMediaPreview}
           setMedia={setMedia}
           showModal={showModal}
           setShowModal={setShowModal}
@@ -128,9 +129,9 @@ function CreatePost({ user, setPosts }) {
         <div
           onClick={() => inputRef.current.click()}
           style={addStyles()}
-          onDragOver={e => dragEvent(e, true)}
-          onDragLeave={e => dragEvent(e, false)}
-          onDrop={e => {
+          onDragOver={(e) => dragEvent(e, true)}
+          onDragLeave={(e) => dragEvent(e, false)}
+          onDrop={(e) => {
             dragEvent(e, true);
 
             const droppedFile = Array.from(e.dataTransfer.files);

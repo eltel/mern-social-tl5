@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Header, Button, Grid, Icon } from "semantic-ui-react";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
 
-function CropImageModal({ mediaPreview, setMedia, showModal, setShowModal }) {
+function CropImageModal({
+  mediaPreview,
+  setMediaPreview,
+  setMedia,
+  showModal,
+  setShowModal,
+}) {
   const [cropper, setCropper] = useState();
 
   const getCropData = () => {
     if (cropper) {
       setMedia(cropper.getCroppedCanvas().toDataURL());
+      setMediaPreview(cropper.getCroppedCanvas().toDataURL());
       cropper.destroy();
     }
 
@@ -55,7 +62,7 @@ function CropImageModal({ mediaPreview, setMedia, showModal, setShowModal }) {
                 background={false}
                 autoCropArea={1}
                 checkOrientation={false}
-                onInitialized={cropper => setCropper(cropper)}
+                onInitialized={(cropper) => setCropper(cropper)}
               />
             </Modal.Content>
           </Grid.Column>
@@ -76,7 +83,7 @@ function CropImageModal({ mediaPreview, setMedia, showModal, setShowModal }) {
                       display: "inline-block",
                       padding: "10px",
                       overflow: "hidden",
-                      boxSizing: "border-box"
+                      boxSizing: "border-box",
                     }}
                     className="img-preview"
                   />
