@@ -1,5 +1,4 @@
 const express = require("express");
-const { getLinkPreview } = require("link-preview-js");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const UserModel = require("../models/UserModel");
@@ -16,52 +15,19 @@ const {
 // CREATE A POST
 
 router.post("/", authMiddleware, async (req, res) => {
-  // const { text, location, picUrl } = req.body;
-  const { text, location } = req.body;
-  let { picUrl } = req.body;
+  const { text, location, picUrl } = req.body;
 
   if (text.length < 1)
     return res.status(401).send("Text must be at least 1 character");
-
-  let data = await getLinkPreview(text);
-
-  if (!data.url) {
-    data = text;
-  }
-
-  // if (data.url) {
-  //   data = await getLinkPreview(text);
-  // }
-
-  const { images, description } = data;
-
-  let thumbnail = "No Image found";
-
-  if (images?.length > 0) {
-    thumbnail = images[0];
-    //   SAVE thumbnail link in DB.
-    console.log("thumbnail", data);
-  }
-
-  if (description?.length > 0) {
-    return description;
-  } else {
-    description = "";
-  }
 
   try {
     const newPost = {
       user: req.userId,
       text,
-      description,
     };
     if (location) newPost.location = location;
-    if (picUrl) {
-      newPost.picUrl = picUrl;
-    } else {
-      newPost.picUrl = thumbnail;
-    }
-    console.log("picUrl", picUrl);
+    if (picUrl) newPost.picUrl = picUrl;
+
     const post = await new PostModel(newPost).save();
 
     const postCreated = await PostModel.findById(post._id).populate("user");

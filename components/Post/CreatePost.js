@@ -4,7 +4,7 @@ import uploadPic from "../../utils/uploadPicToCloudinary";
 import { submitNewPost } from "../../utils/postActions";
 import CropImageModal from "./CropImageModal";
 
-function CreatePost({ user, setPosts }) {
+function CreatePost({ user, setPosts, message, submessage }) {
   const [newPost, setNewPost] = useState({ text: "", location: "" });
   const [loading, setLoading] = useState(false);
   const inputRef = useRef();
@@ -76,6 +76,8 @@ function CreatePost({ user, setPosts }) {
 
   return (
     <>
+      <h1>{message}</h1>
+      <h4>{submessage}</h4>
       {showModal && (
         <CropImageModal
           mediaPreview={mediaPreview}

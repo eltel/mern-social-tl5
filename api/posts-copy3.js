@@ -19,6 +19,7 @@ router.post("/", authMiddleware, async (req, res) => {
   // const { text, location, picUrl } = req.body;
   const { text, location } = req.body;
   let { picUrl } = req.body;
+  console.log("picUrl", picUrl);
 
   if (text.length < 1)
     return res.status(401).send("Text must be at least 1 character");
@@ -26,14 +27,10 @@ router.post("/", authMiddleware, async (req, res) => {
   let data = await getLinkPreview(text);
 
   if (!data.url) {
-    data = text;
+    data.url = "";
+  } else {
+    const { images } = data;
   }
-
-  // if (data.url) {
-  //   data = await getLinkPreview(text);
-  // }
-
-  const { images, description } = data;
 
   let thumbnail = "No Image found";
 
@@ -42,26 +39,18 @@ router.post("/", authMiddleware, async (req, res) => {
     //   SAVE thumbnail link in DB.
     console.log("thumbnail", data);
   }
-
-  if (description?.length > 0) {
-    return description;
-  } else {
-    description = "";
-  }
-
   try {
     const newPost = {
       user: req.userId,
       text,
-      description,
     };
     if (location) newPost.location = location;
     if (picUrl) {
       newPost.picUrl = picUrl;
     } else {
-      newPost.picUrl = thumbnail;
+      picUrl = thumbnail;
     }
-    console.log("picUrl", picUrl);
+
     const post = await new PostModel(newPost).save();
 
     const postCreated = await PostModel.findById(post._id).populate("user");

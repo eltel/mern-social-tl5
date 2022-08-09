@@ -42,8 +42,6 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
     setComments,
   });
 
-  // console.log("post", post);
-
   return (
     <>
       {showModal && (
@@ -133,17 +131,6 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
             >
               {post.text}
             </Card.Description>
-            {post.description && (
-              <Card.Description
-                style={{
-                  fontSize: "17px",
-                  letterSpacing: "0.1px",
-                  wordSpacing: "0.35px",
-                }}
-              >
-                {post.description}
-              </Card.Description>
-            )}
           </Card.Content>
 
           <Card.Content extra>

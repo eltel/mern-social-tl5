@@ -5,7 +5,6 @@ import baseUrl from "../utils/baseUrl";
 import { parseCookies } from "nookies";
 import { Grid } from "semantic-ui-react";
 import { NoProfilePosts, NoProfile } from "../components/Layout/NoData";
-import CreatePost from "../components/Post/CreatePost";
 import CardPost from "../components/Post/CardPost";
 import { PlaceHolderPosts } from "../components/Layout/PlaceHolderGroup";
 import ProfileMenuTabs from "../components/Profile/ProfileMenuTabs";
@@ -24,7 +23,7 @@ function ProfilePage({
   followersLength,
   followingLength,
   user,
-  userFollowStats,
+  userFollowStats
 }) {
   const router = useRouter();
 
@@ -33,7 +32,7 @@ function ProfilePage({
   const [showToastr, setShowToastr] = useState(false);
 
   const [activeItem, setActiveItem] = useState("profile");
-  const handleItemClick = (clickedTab) => setActiveItem(clickedTab);
+  const handleItemClick = clickedTab => setActiveItem(clickedTab);
 
   const [loggedUserFollowStats, setUserFollowStats] = useState(userFollowStats);
 
@@ -64,10 +63,6 @@ function ProfilePage({
 
   const socket = useRef();
 
-  const message = "this will be the DJs' show creation  post creation section";
-  const submessage =
-    "this will be displayed in its own tab like following/update profile";
-
   return (
     <SocketHoc user={user} socket={socket}>
       {showToastr && <PostDeleteToastr />}
@@ -85,6 +80,7 @@ function ProfilePage({
             />
           </Grid.Column>
         </Grid.Row>
+
         <Grid.Row>
           <Grid.Column>
             {activeItem === "profile" && (
@@ -95,22 +91,11 @@ function ProfilePage({
                   loggedUserFollowStats={loggedUserFollowStats}
                   setUserFollowStats={setUserFollowStats}
                 />
-                {user.role === "dj" && (
-                  <>
-                    <div>I'm a DJ!</div>
-                    <CreatePost
-                      user={user}
-                      setPosts={setPosts}
-                      message={message}
-                      submessage={submessage}
-                    />
-                  </>
-                )}
 
                 {loading ? (
                   <PlaceHolderPosts />
                 ) : posts.length > 0 ? (
-                  posts.map((post) => (
+                  posts.map(post => (
                     <CardPost
                       socket={socket}
                       key={post._id}
@@ -144,9 +129,7 @@ function ProfilePage({
               />
             )}
 
-            {activeItem === "updateProfile" && (
-              <UpdateProfile Profile={profile} />
-            )}
+            {activeItem === "updateProfile" && <UpdateProfile Profile={profile} />}
 
             {activeItem === "settings" && (
               <Settings newMessagePopup={user.newMessagePopup} />
@@ -158,13 +141,13 @@ function ProfilePage({
   );
 }
 
-export const getServerSideProps = async (ctx) => {
+export const getServerSideProps = async ctx => {
   try {
     const { username } = ctx.query;
     const { token } = parseCookies(ctx);
 
     const res = await axios.get(`${baseUrl}/api/profile/${username}`, {
-      headers: { Authorization: token },
+      headers: { Authorization: token }
     });
 
     const { profile, followersLength, followingLength } = res.data;
