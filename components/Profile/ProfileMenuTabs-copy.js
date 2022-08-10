@@ -7,7 +7,7 @@ function ProfileMenuTabs({
   followersLength,
   followingLength,
   ownAccount,
-  loggedUserFollowStats,
+  loggedUserFollowStats
 }) {
   return (
     <>
@@ -35,11 +35,6 @@ function ProfileMenuTabs({
               active={activeItem === "following"}
               onClick={() => handleItemClick("following")}
             />
-            <Menu.Item
-              name={`${followingLength} following-copy`}
-              active={activeItem === "following-copy"}
-              onClick={() => handleItemClick("following-copy")}
-            />
 
             <Menu.Item
               name="Update Profile"
@@ -54,13 +49,11 @@ function ProfileMenuTabs({
             />
           </>
         ) : (
-          <>
-            <Menu.Item
-              name={`${followingLength} following`}
-              active={activeItem === "following"}
-              onClick={() => handleItemClick("following")}
-            />
-          </>
+          <Menu.Item
+            name={`${followingLength} following`}
+            active={activeItem === "following"}
+            onClick={() => handleItemClick("following")}
+          />
         )}
       </Menu>
     </>

@@ -12,6 +12,7 @@ import ProfileMenuTabs from "../components/Profile/ProfileMenuTabs";
 import ProfileHeader from "../components/Profile/ProfileHeader";
 import Followers from "../components/Profile/Followers";
 import Following from "../components/Profile/Following";
+import FollowingCopy from "../components/Profile/FollowingCopy";
 import UpdateProfile from "../components/Profile/UpdateProfile";
 import Settings from "../components/Profile/Settings";
 import { PostDeleteToastr } from "../components/Layout/Toastr";
@@ -95,7 +96,7 @@ function ProfilePage({
                   loggedUserFollowStats={loggedUserFollowStats}
                   setUserFollowStats={setUserFollowStats}
                 />
-                {user.role === "dj" && (
+                {user.role === "dj" && profile.user._id === user._id && (
                   <>
                     <div>I'm a DJ!</div>
                     <CreatePost
@@ -137,6 +138,14 @@ function ProfilePage({
 
             {activeItem === "following" && (
               <Following
+                user={user}
+                loggedUserFollowStats={loggedUserFollowStats}
+                setUserFollowStats={setUserFollowStats}
+                profileUserId={profile.user._id}
+              />
+            )}
+            {activeItem === "following-copy" && (
+              <FollowingCopy
                 user={user}
                 loggedUserFollowStats={loggedUserFollowStats}
                 setUserFollowStats={setUserFollowStats}

@@ -43,17 +43,11 @@ router.post("/", authMiddleware, async (req, res) => {
     console.log("thumbnail", data);
   }
 
-  if (description?.length > 0) {
-    return description;
-  } else {
-    description = "";
-  }
-
   try {
     const newPost = {
       user: req.userId,
       text,
-      description,
+      description: data.description,
     };
     if (location) newPost.location = location;
     if (picUrl) {
@@ -61,9 +55,13 @@ router.post("/", authMiddleware, async (req, res) => {
     } else {
       newPost.picUrl = thumbnail;
     }
-    console.log("picUrl", picUrl);
-    const post = await new PostModel(newPost).save();
 
+    // if (!description) {
+    //   description = "";
+    // }
+
+    const post = await new PostModel(newPost).save();
+    console.log("posts-post", post);
     const postCreated = await PostModel.findById(post._id).populate("user");
 
     return res.json(postCreated);
