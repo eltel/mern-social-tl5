@@ -42,6 +42,7 @@ const { likeOrUnlikePost } = require("./utilsServer/likeOrUnlikePost");
 io.on("connection", (socket) => {
   socket.on("join", async ({ userId }) => {
     const users = await addUser(userId, socket.id);
+    console.log(users);
 
     setInterval(() => {
       socket.emit("connectedUsers", {
@@ -139,6 +140,7 @@ nextApp.prepare().then(() => {
 
   httpServer.listen(PORT, (err) => {
     if (err) throw err;
+    // console.log("Express server running", httpServer.address());
     console.log("Express server running");
   });
 });

@@ -31,7 +31,6 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
   const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
-  const [imgError, setImgError] = useState(false);
   const picUrlText = "No image available";
 
   const addPropsToModal = () => ({
@@ -61,14 +60,13 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
   //   };
   // }
   const postPicUrl = post.picUrl;
-  const useIfError = "https://picsum.photos/id/237/200/300";
 
-  // async function checkImage(postPicUrl) {
-  //   const res = await fetch(postPicUrl);
-  //   const buff = await res.blob();
+  async function checkImage(postPicUrl) {
+    const res = await fetch(postPicUrl);
+    const buff = await res.blob();
 
-  //   return buff.type.startsWith("image/");
-  // }
+    return buff.type.startsWith("image/");
+  }
 
   return (
     <>
@@ -80,7 +78,7 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
           onClose={() => setShowModal(false)}
         >
           <Modal.Content>
-            {postPicUrl ? (
+            {post.picUrl ? (
               <ImageModal {...addPropsToModal()} />
             ) : (
               <NoImageModal {...addPropsToModal()} />
@@ -92,16 +90,15 @@ function CardPost({ post, user, setPosts, setShowToastr, socket }) {
       <Segment basic>
         <Card color="teal" fluid>
           {/* {post.picUrl && checkImage(postPicUrl) && ( */}
-          {postPicUrl && (
+          {post.picUrl && (
             <Image
-              src={imgError ? useIfError : postPicUrl}
+              src={post.picUrl ? post.picUrl : picUrlText}
               style={{ cursor: "pointer" }}
               floated="left"
               wrapped
               ui={false}
               alt="PostImage"
               onClick={() => setShowModal(true)}
-              onError={() => setImgError(true)}
             />
           )}
 

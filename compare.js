@@ -1,163 +1,145 @@
-import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
-import axios from "axios";
-import baseUrl from "../utils/baseUrl";
-import CreatePost from "../components/Post/CreatePost";
-import CardPost from "../components/Post/CardPost";
-import { Segment } from "semantic-ui-react";
-import { parseCookies } from "nookies";
-import { NoPosts } from "../components/Layout/NoData";
-import { PostDeleteToastr } from "../components/Layout/Toastr";
-import InfiniteScroll from "react-infinite-scroll-component";
-import {
-  PlaceHolderPosts,
-  EndMessage,
-} from "../components/Layout/PlaceHolderGroup";
-import cookie from "js-cookie";
-import getUserInfo from "../utils/getUserInfo";
-import MessageNotificationModal from "../components/Home/MessageNotificationModal";
-import newMsgSound from "../utils/newMsgSound";
-import NotificationPortal from "../components/Home/NotificationPortal";
+const express = require("express");
+const app = express();
 
-function Index({ user, postsData, errorLoading }) {
-  const [posts, setPosts] = useState(postsData || []);
-  const [showToastr, setShowToastr] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+// OLD VERSION taught in the course.
+// const server = require("http").Server(app);
+// const io = require("socket.io")(server);
 
-  const [pageNumber, setPageNumber] = useState(2);
-  const socket = useRef();
+// LATEST VERSION Socket io @4.4.1
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  /* options */
+});
 
-  const [newMessageReceived, setNewMessageReceived] = useState(null);
-  const [newMessageModal, showNewMessageModal] = useState(false);
+const next = require("next");
+const dev = process.env.NODE_ENV !== "production";
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
+require("dotenv").config({ path: "./config.env" });
 
-  const [newNotification, setNewNotification] = useState(null);
-  const [notificationPopup, showNotificationPopup] = useState(false);
+const connectDb = require("./utilsServer/connectDb");
+connectDb();
 
-  useEffect(() => {
-    if (!socket.current) {
-      socket.current = io(baseUrl);
-    }
+app.use(express.json());
 
-    if (socket.current) {
-      socket.current.emit("join", { userId: user._id });
+const PORT = process.env.PORT || 3000;
+const {
+  addUser,
+  removeUser,
+  findConnectedUser,
+} = require("./utilsServer/roomActions");
+const {
+  loadMessages,
+  sendMsg,
+  setMsgToUnread,
+  deleteMsg,
+} = require("./utilsServer/messageActions");
 
-      socket.current.on("newMsgReceived", async ({ newMsg }) => {
-        const { name, profilePicUrl } = await getUserInfo(newMsg.sender);
+const { likeOrUnlikePost } = require("./utilsServer/likeOrUnlikePost");
 
-        if (user.newMessagePopup) {
-          setNewMessageReceived({
-            ...newMsg,
-            senderName: name,
-            senderProfilePic: profilePicUrl,
+io.on("connection", (socket) => {
+  socket.on("join", async ({ userId }) => {
+    const users = await addUser(userId, socket.id);
+    console.log(users);
+
+    setInterval(() => {
+      socket.emit("connectedUsers", {
+        users: users.filter((user) => user.userId !== userId),
+      });
+    }, 10000);
+  });
+
+  socket.on("likePost", async ({ postId, userId, like }) => {
+    const { success, name, profilePicUrl, username, postByUserId, error } =
+      await likeOrUnlikePost(postId, userId, like);
+
+    if (success) {
+      socket.emit("postLiked");
+
+      if (postByUserId !== userId) {
+        const receiverSocket = findConnectedUser(postByUserId);
+
+        if (receiverSocket && like) {
+          // WHEN YOU WANT TO SEND DATA TO ONE PARTICULAR CLIENT
+          io.to(receiverSocket.socketId).emit("newNotificationReceived", {
+            name,
+            profilePicUrl,
+            username,
+            postId,
           });
-          showNewMessageModal(true);
         }
-        newMsgSound(name);
-      });
-    }
-    document.title = `Welcome, ${user.name.split(" ")[0]}`;
-    return () => {
-      if (socket.current) {
-        socket.current.emit("disconnect");
-        socket.current.off();
       }
-    };
-  }, []);
-
-  useEffect(() => {
-    showToastr && setTimeout(() => setShowToastr(false), 3000);
-  }, [showToastr]);
-
-  const fetchDataOnScroll = async () => {
-    try {
-      const res = await axios.get(`${baseUrl}/api/posts`, {
-        headers: { Authorization: cookie.get("token") },
-        params: { pageNumber },
-      });
-
-      if (res.data.length === 0) setHasMore(false);
-
-      setPosts((prev) => [...prev, ...res.data]);
-      setPageNumber((prev) => prev + 1);
-    } catch (error) {
-      alert("Error fetching Posts");
     }
-  };
+  });
 
-  if (posts.length === 0 || errorLoading) return <NoPosts />;
+  socket.on("loadMessages", async ({ userId, messagesWith }) => {
+    const { chat, error } = await loadMessages(userId, messagesWith);
 
-  useEffect(() => {
-    if (socket.current) {
-      socket.current.on(
-        "newNotificationReceived",
-        ({ name, profilePicUrl, username, postId }) => {
-          setNewNotification({ name, profilePicUrl, username, postId });
+    !error
+      ? socket.emit("messagesLoaded", { chat })
+      : socket.emit("noChatFound");
+  });
 
-          showNotificationPopup(true);
-        }
-      );
+  socket.on("sendNewMsg", async ({ userId, msgSendToUserId, msg }) => {
+    const { newMsg, error } = await sendMsg(userId, msgSendToUserId, msg);
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+
+    if (receiverSocket) {
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      io.to(receiverSocket.socketId).emit("newMsgReceived", { newMsg });
     }
-  }, []);
-  return (
-    <>
-      {notificationPopup && newNotification !== null && (
-        <NotificationPortal
-          newNotification={newNotification}
-          notificationPopup={notificationPopup}
-          showNotificationPopup={showNotificationPopup}
-        />
-      )}
+    //
+    else {
+      await setMsgToUnread(msgSendToUserId);
+    }
 
-      {showToastr && <PostDeleteToastr />}
+    !error && socket.emit("msgSent", { newMsg });
+  });
 
-      {newMessageModal && newMessageReceived !== null && (
-        <MessageNotificationModal
-          socket={socket}
-          showNewMessageModal={showNewMessageModal}
-          newMessageModal={newMessageModal}
-          newMessageReceived={newMessageReceived}
-          user={user}
-        />
-      )}
-      <Segment>
-        <CreatePost user={user} setPosts={setPosts} />
+  socket.on("deleteMsg", async ({ userId, messagesWith, messageId }) => {
+    const { success } = await deleteMsg(userId, messagesWith, messageId);
 
-        <InfiniteScroll
-          hasMore={hasMore}
-          next={fetchDataOnScroll}
-          loader={<PlaceHolderPosts />}
-          endMessage={<EndMessage />}
-          dataLength={posts.length}
-        >
-          {posts.map((post) => (
-            <CardPost
-              socket={socket}
-              key={post._id}
-              post={post}
-              user={user}
-              setPosts={setPosts}
-              setShowToastr={setShowToastr}
-            />
-          ))}
-        </InfiniteScroll>
-      </Segment>
-    </>
+    if (success) socket.emit("msgDeleted");
+  });
+
+  socket.on(
+    "sendMsgFromNotification",
+    async ({ userId, msgSendToUserId, msg }) => {
+      const { newMsg, error } = await sendMsg(userId, msgSendToUserId, msg);
+      const receiverSocket = findConnectedUser(msgSendToUserId);
+
+      if (receiverSocket) {
+        // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+        io.to(receiverSocket.socketId).emit("newMsgReceived", { newMsg });
+      }
+      //
+      else {
+        await setMsgToUnread(msgSendToUserId);
+      }
+
+      !error && socket.emit("msgSentFromNotification");
+    }
   );
-}
 
-Index.getInitialProps = async (ctx) => {
-  try {
-    const { token } = parseCookies(ctx);
+  socket.on("disconnect", () => removeUser(socket.id));
+});
 
-    const res = await axios.get(`${baseUrl}/api/posts`, {
-      headers: { Authorization: token },
-      params: { pageNumber: 1 },
-    });
+nextApp.prepare().then(() => {
+  app.use("/api/signup", require("./api/signup"));
+  app.use("/api/auth", require("./api/auth"));
+  app.use("/api/search", require("./api/search"));
+  app.use("/api/posts", require("./api/posts"));
+  app.use("/api/profile", require("./api/profile"));
+  app.use("/api/notifications", require("./api/notifications"));
+  app.use("/api/chats", require("./api/chats"));
+  app.use("/api/reset", require("./api/reset"));
 
-    return { postsData: res.data };
-  } catch (error) {
-    return { errorLoading: true };
-  }
-};
+  app.all("*", (req, res) => handle(req, res));
 
-export default Index;
+  httpServer.listen(PORT, (err) => {
+    if (err) throw err;
+    console.log("Express server running");
+  });
+});

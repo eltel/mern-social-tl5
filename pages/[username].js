@@ -37,8 +37,8 @@ function ProfilePage({
   const handleItemClick = (clickedTab) => setActiveItem(clickedTab);
 
   const [loggedUserFollowStats, setUserFollowStats] = useState(userFollowStats);
-
-  const ownAccount = profile.user._id === user._id;
+  const ownAccount = profile?.user._id === user._id;
+  // console.log("username", profile?.user);
 
   if (errorLoading) return <NoProfile />;
 
@@ -65,9 +65,9 @@ function ProfilePage({
 
   const socket = useRef();
 
-  const message = "this will be the DJs' show creation  post creation section";
-  const submessage =
-    "this will be displayed in its own tab like following/update profile";
+  // const message = "this will be the DJs' show creation  post creation section";
+  // const submessage =
+  //   "this will be displayed in its own tab like following/update profile";
 
   return (
     <SocketHoc user={user} socket={socket}>
@@ -96,7 +96,7 @@ function ProfilePage({
                   loggedUserFollowStats={loggedUserFollowStats}
                   setUserFollowStats={setUserFollowStats}
                 />
-                {user.role === "dj" && profile.user._id === user._id && (
+                {/* {user.role === "dj" && profile.user._id === user._id && (
                   <>
                     <div>I'm a DJ!</div>
                     <CreatePost
@@ -106,7 +106,7 @@ function ProfilePage({
                       submessage={submessage}
                     />
                   </>
-                )}
+                )} */}
 
                 {loading ? (
                   <PlaceHolderPosts />
@@ -146,6 +146,8 @@ function ProfilePage({
             )}
             {activeItem === "following-copy" && (
               <FollowingCopy
+                setPosts={setPosts}
+                profile={profile}
                 user={user}
                 loggedUserFollowStats={loggedUserFollowStats}
                 setUserFollowStats={setUserFollowStats}

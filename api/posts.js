@@ -23,11 +23,17 @@ router.post("/", authMiddleware, async (req, res) => {
   if (text.length < 1)
     return res.status(401).send("Text must be at least 1 character");
 
-  let data = await getLinkPreview(text);
-
-  if (!data.url) {
+  try {
+    let data = await getLinkPreview(text);
+    return data;
+  } catch (error) {
     data = text;
+    console.log(error);
   }
+
+  // if (!data.url) {
+  //   data = text;
+  // }
 
   // if (data.url) {
   //   data = await getLinkPreview(text);
@@ -55,6 +61,12 @@ router.post("/", authMiddleware, async (req, res) => {
     } else {
       newPost.picUrl = thumbnail;
     }
+
+    if (!picUrl && !thumbnail) newPost.picUrl = "";
+
+    // if (!thumbnail || !picUrl) {
+    //   newPost.picUrl = null;
+    // }
 
     // if (!description) {
     //   description = "";

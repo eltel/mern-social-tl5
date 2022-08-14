@@ -123,7 +123,12 @@ function Index({ user, postsData, errorLoading }) {
       {/* {showToastr && <PostDeleteToastr />} */}
 
       <Segment>
-        <CreatePost user={user} setPosts={setPosts} />
+        <CreatePost
+          user={user}
+          setPosts={setPosts}
+          // message={message}
+          // submessage={submessage}
+        />
 
         {posts.length === 0 || errorLoading ? (
           <NoPosts />

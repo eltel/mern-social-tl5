@@ -3,12 +3,15 @@ import { Button, Image, List } from "semantic-ui-react";
 import Spinner from "../Layout/Spinner";
 import { NoFollowData } from "../Layout/NoData";
 import { followUser, unfollowUser } from "../../utils/profileActions";
+import CreatePost from "../Post/CreatePost";
 import axios from "axios";
 import baseUrl from "../../utils/baseUrl";
 import cookie from "js-cookie";
 
 const FollowingCopy = ({
   user,
+  profile,
+  setPosts,
   loggedUserFollowStats,
   setUserFollowStats,
   profileUserId,
@@ -16,6 +19,10 @@ const FollowingCopy = ({
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+
+  const message = "this will be the DJs' show creation  post creation section";
+  const submessage =
+    "this will be displayed in its own tab like following/update profile";
 
   useEffect(() => {
     const getFollowing = async () => {
@@ -39,7 +46,20 @@ const FollowingCopy = ({
   }, []);
 
   return (
-    <h1>Following Copy</h1>
+    <>
+      <h1>Following Copy</h1>
+      {user.role === "dj" && profile.user._id === user._id && (
+        <>
+          <div>I'm a DJ!</div>
+          <CreatePost
+            user={user}
+            setPosts={setPosts}
+            message={message}
+            submessage={submessage}
+          />
+        </>
+      )}
+    </>
     // <>
     //   {loading ? (
     //     <Spinner />

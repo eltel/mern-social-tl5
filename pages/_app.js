@@ -13,7 +13,7 @@ function MyApp({ Component, pageProps }) {
       <Head>
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
         <meta charSet="UTF-8" />
-        <title>Mini Social Media</title>
+        <title>Timeline Music Community</title>
       </Head>
       <Layout {...pageProps}>
         <Component {...pageProps} />

@@ -35,8 +35,17 @@ function ProfileMenuTabs({
               active={activeItem === "following"}
               onClick={() => handleItemClick("following")}
             />
+            {/* {user.role === "dj" && profile.user._id === user._id && (
+              <Menu.Item
+                // name={`${followingLength} following-copys`}
+                name={`create events`}
+                active={activeItem === "following-copy"}
+                onClick={() => handleItemClick("following-copy")}
+              />
+            )} */}
             <Menu.Item
-              name={`${followingLength} following-copy`}
+              // name={`${followingLength} following-copys`}
+              name={`create events`}
               active={activeItem === "following-copy"}
               onClick={() => handleItemClick("following-copy")}
             />
