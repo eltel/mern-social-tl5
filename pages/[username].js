@@ -82,6 +82,8 @@ function ProfilePage({
               followingLength={followingLength}
               ownAccount={ownAccount}
               loggedUserFollowStats={loggedUserFollowStats}
+              user={user}
+              profile={profile}
             />
           </Grid.Column>
         </Grid.Row>
