@@ -45,6 +45,7 @@ function ProfileMenuTabs({
                 onClick={() => handleItemClick("following-copy")}
               />
             )} */}
+<<<<<<< HEAD
             {user.role === "dj" && profile.user._id === user._id && (
               <Menu.Item
                 // name={`${followingLength} following-copys`}
@@ -53,6 +54,14 @@ function ProfileMenuTabs({
                 onClick={() => handleItemClick("create-events")}
               />
             )}
+=======
+            <Menu.Item
+              // name={`${followingLength} following-copys`}
+              name={`create events`}
+              active={activeItem === "create-events"}
+              onClick={() => handleItemClick("create-events")}
+            />
+>>>>>>> c35fdf6 (updated event create section in DJs account page)
 
             <Menu.Item
               name="Update Profile"
