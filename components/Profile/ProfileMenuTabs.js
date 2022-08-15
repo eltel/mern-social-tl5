@@ -49,8 +49,8 @@ function ProfileMenuTabs({
               <Menu.Item
                 // name={`${followingLength} following-copys`}
                 name={`create events`}
-                active={activeItem === "following-copy"}
-                onClick={() => handleItemClick("following-copy")}
+                active={activeItem === "create-events"}
+                onClick={() => handleItemClick("create-events")}
               />
             )}
 
