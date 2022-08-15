@@ -45,7 +45,8 @@ function ProfileMenuTabs({
                 onClick={() => handleItemClick("following-copy")}
               />
             )} */}
-            {user.role === "dj" && profile.user._id === user._id && (
+
+            {user.role === "dj" && profile?.user._id === user._id && (
               <Menu.Item
                 // name={`${followingLength} following-copys`}
                 name={`create events`}

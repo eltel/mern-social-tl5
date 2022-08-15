@@ -11,7 +11,7 @@ import ProfileMenuTabs from "../components/Profile/ProfileMenuTabs";
 import ProfileHeader from "../components/Profile/ProfileHeader";
 import Followers from "../components/Profile/Followers";
 import Following from "../components/Profile/Following";
-import FollowingCopy from "../components/Profile/CreateEvents";
+import CreateEvents from "../components/Profile/CreateEvents";
 import UpdateProfile from "../components/Profile/UpdateProfile";
 import Settings from "../components/Profile/Settings";
 import { PostDeleteToastr } from "../components/Layout/Toastr";
@@ -146,7 +146,7 @@ function ProfilePage({
               />
             )}
             {activeItem === "create-events" && (
-              <FollowingCopy
+              <CreateEvents
                 setPosts={setPosts}
                 profile={profile}
                 user={user}
