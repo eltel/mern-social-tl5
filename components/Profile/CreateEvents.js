@@ -8,7 +8,7 @@ import axios from "axios";
 import baseUrl from "../../utils/baseUrl";
 import cookie from "js-cookie";
 
-const FollowingCopy = ({
+const CreateEvents = ({
   user,
   profile,
   setPosts,
@@ -20,9 +20,9 @@ const FollowingCopy = ({
   const [loading, setLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
-  const message = "this will be the DJs' show creation  post creation section";
+  const message = "this will be the DJs' show/event post creation section";
   const submessage =
-    "this will be displayed in its own tab like following/update profile";
+    "These posts will be of a diferent type, with multiple extra form fields for adding different data types and didplayed in a differnt feed on th hompepage where users can also join the events and follow artists/DJs";
 
   useEffect(() => {
     const getFollowing = async () => {
@@ -47,7 +47,7 @@ const FollowingCopy = ({
 
   return (
     <>
-      <h1>Following Copy</h1>
+      <h1>Create Events</h1>
       {user.role === "dj" && profile.user._id === user._id && (
         <>
           <div>I'm a DJ!</div>
@@ -124,4 +124,4 @@ const FollowingCopy = ({
   );
 };
 
-export default FollowingCopy;
+export default CreateEvents;
