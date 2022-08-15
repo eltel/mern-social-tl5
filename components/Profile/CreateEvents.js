@@ -22,7 +22,7 @@ const CreateEvents = ({
 
   const message = "this will be the DJs' show/event post creation section";
   const submessage =
-    "These posts will be of a diferent type, with multiple extra form fields for adding different data types and displayed in a different feed on the hompepage where users can also join the events and follow artists/DJs";
+    "These posts will be of a diferent type, with multiple extra form fields for adding different data types and displayed in a different feed on the hompepage where users can also join the events and follow artists/DJs etc";
 
   useEffect(() => {
     const getFollowing = async () => {
